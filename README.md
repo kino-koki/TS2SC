@@ -12,6 +12,24 @@
 
 **当前实测基线（Qwen3-0.6B → SimplCore 0.6646B）**
 
+## 最新：SimplUnity v2 融合完成
+
+**MiniCPM5-1B × Qwen3-0.6B → SimplCore，1,438,585,652 参数（1.439 B）**
+
+| 指标 | 数值 | 说明 |
+|---|---:|---|
+| **逐位真实权重** | **1,175,062,016（81.8%）** | 263 张量 `torch.equal` 全等，缺失 0 不一致 0 |
+| O(1) 流式状态 | 每 batch 内跨 L 唯一状态数 = 1 | ✅ 与序列长度无关 |
+| @4M token | **20.41 MiB** vs MiniCPM5 KV **91.6 GiB** | |
+| 流式/并行对偶 | max\|Δ\| = **1.01e-06** | ✅ < 4e-5，定理 3 首次在真权重上通过 |
+| 权重下载 | [Release v1.0-unity](https://github.com/kino-koki/TS2SC/releases/tag/v1.0-unity) | |
+
+详见 [05b](docs/05b-SimplUnity-v2实测.md)。
+
+---
+
+## Qwen3-0.6B 单模型迁移基线
+
 | 指标 | 数值 | 说明 |
 |---|---:|---|
 | 迁移参数 | 664,607,516 | |
@@ -59,6 +77,7 @@ python3 scripts/test_capability.py
 | 03 | [蒸馏恢复](docs/03-蒸馏恢复.md) | **为什么必须蒸馏**、真实激活缓存、可续跑训练 |
 | 04 | [能力验证](docs/04-能力验证.md) | 五项测试、判读标准 |
 | 05 | [SimplUnity 融合](docs/05-SimplUnity融合.md) | 多模型合体、参数量提升 |
+| 05b | **[SimplUnity v2 实测](docs/05b-SimplUnity-v2实测.md)** | **MiniCPM5-1B × Qwen3-0.6B → 1.439B，81.8% 逐位真权重** |
 | 06 | [踩坑记录](docs/06-踩坑记录.md) | 静默 bug 全集（不报错但毁结果） |
 | 07 | [API 参考](docs/07-API参考.md) | 全部脚本参数与返回值 |
 | 08 | [实测数据](docs/08-实测数据.md) | 所有实验原始数字 |
