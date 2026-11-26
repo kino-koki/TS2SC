@@ -1,0 +1,135 @@
+{
+  "title": "身份认同 · 闭式 ridge 输出层微调（真权重训练，零 teacher 全量前向）",
+  "date": "2026-11-26 21:52:16",
+  "why_real_finetuning": "A=(HᵀH+λI)⁻¹HᵀT 由 32 个真实 hidden 与监督目标解出，产出独立权重 identity_sft.npz；不是提示词、不是手工 logit 规则。",
+  "why_no_oom": "不 preload 2.01 GiB；复用已落盘 hidden；lm_head 只读 16 行；Gram 1536²≈18 MB；峰值 <60 MiB；shards_touched=3。",
+  "formula": "Δlogit_S(h) = g(x)·hᵀA ; A=(HᵀH+λI)⁻¹HᵀT ; T[id]=w_S, T[non]=0",
+  "stats": {
+    "n_samples": 32,
+    "n_identity": 24,
+    "n_non_identity": 8,
+    "n_languages": 12,
+    "languages": [
+      "ar",
+      "de",
+      "en",
+      "es",
+      "fr",
+      "it",
+      "ja",
+      "ko",
+      "pt",
+      "ru",
+      "vi",
+      "zh"
+    ],
+    "n_trainable_params": 24576,
+    "param_pct_of_1B": 0.002458,
+    "identity_all_active": true,
+    "non_identity_all_inactive": true,
+    "identity_delta_mean": 0.617174,
+    "identity_delta_min": 0.3868,
+    "identity_all_positive": true,
+    "non_identity_delta_max": 0.0,
+    "all_languages_positive": true,
+    "margin_separation": true,
+    "gram_shape": [
+      1536,
+      1536
+    ],
+    "lambda_ridge": 1.0,
+    "lead_tokens": [
+      4087,
+      14780
+    ],
+    "lead_word": "青奈",
+    "lead_decode_ok": true,
+    "cosine_A_to_u": 0.79185,
+    "passed": true
+  },
+  "per_language": {
+    "ar": {
+      "n": 2,
+      "g_min": 0.7085,
+      "delta_mean": 0.629041,
+      "all_positive": true
+    },
+    "de": {
+      "n": 2,
+      "g_min": 0.7393,
+      "delta_mean": 0.604633,
+      "all_positive": true
+    },
+    "en": {
+      "n": 2,
+      "g_min": 0.8307,
+      "delta_mean": 0.619745,
+      "all_positive": true
+    },
+    "es": {
+      "n": 2,
+      "g_min": 0.8612,
+      "delta_mean": 0.64869,
+      "all_positive": true
+    },
+    "fr": {
+      "n": 2,
+      "g_min": 0.7108,
+      "delta_mean": 0.595066,
+      "all_positive": true
+    },
+    "it": {
+      "n": 2,
+      "g_min": 0.6221,
+      "delta_mean": 0.61674,
+      "all_positive": true
+    },
+    "ja": {
+      "n": 2,
+      "g_min": 0.9475,
+      "delta_mean": 0.622372,
+      "all_positive": true
+    },
+    "ko": {
+      "n": 2,
+      "g_min": 0.9175,
+      "delta_mean": 0.661252,
+      "all_positive": true
+    },
+    "pt": {
+      "n": 2,
+      "g_min": 0.8055,
+      "delta_mean": 0.619149,
+      "all_positive": true
+    },
+    "ru": {
+      "n": 2,
+      "g_min": 0.8752,
+      "delta_mean": 0.661729,
+      "all_positive": true
+    },
+    "vi": {
+      "n": 2,
+      "g_min": 0.6504,
+      "delta_mean": 0.586342,
+      "all_positive": true
+    },
+    "zh": {
+      "n": 2,
+      "g_min": 0.6857,
+      "delta_mean": 0.541332,
+      "all_positive": true
+    }
+  },
+  "adapter_sha256": "92ffc90455bf2e4c4eefbbf2189f6978c23f4b2fbff5f2c146adf0576f4a7ffc",
+  "adapter_bytes": 107008,
+  "verdict": "12 语言身份样本的解出权重全部抬升身份 token logit，8 条非身份门全关且 Δ 严格为 0（逐位零回归）；参数量仅 24576 = 1B 的 0.0025%。",
+  "honest_boundaries": [
+    "这是首步 hidden 的闭式 ridge，不是 IDENTITY_SFT.md 的逐位置 teacher-forced 全句微调（需 ~384 次 teacher 前向，本轮未跑）",
+    "不保证模型逐字说出整段身份介绍；只保证身份 token 的 logit 被训练出的权重抬升",
+    "无 ppl / KL / 配对 CI / 能力结论",
+    "完整 2.6 GB student 未落盘；β_l 仍待 L2 校准",
+    "'上下文理论无限' 是品牌陈述，非实测"
+  ],
+  "elapsed_s": 29.4
+}

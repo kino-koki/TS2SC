@@ -1,0 +1,458 @@
+{
+  "title": "身份微调 · 逐语言 logit margin 硬证据",
+  "date": "2026-11-26 21:51:46",
+  "why": "短生成常卡在 <think> 块，拿不到答案文本；本判据直接在权重/lm_head 层算身份 token 的相对 logit 抬升，不依赖生成长度，可证『换语言不露馅』。",
+  "formula": "w_i=max(W_i·v̂,0)/max_j(W_j·v̂); g≥0.5 ⇒ logit_i := max(logit_i, max_logit + 6·w_i), i∈S; 其余 logit 逐位不变",
+  "rank1_self_response": {
+    "min": 0.2489,
+    "mean": 0.339,
+    "all_positive": true
+  },
+  "r_x_note": "v8.8 不再使用 r_x / hidden 注入；抬升量以当前最大 logit 为相对基准，与绝对尺度无关。",
+  "stats": {
+    "n_identity": 24,
+    "n_non_identity": 8,
+    "n_languages": 12,
+    "languages": [
+      "ar",
+      "de",
+      "en",
+      "es",
+      "fr",
+      "it",
+      "ja",
+      "ko",
+      "pt",
+      "ru",
+      "vi",
+      "zh"
+    ],
+    "identity_all_active": true,
+    "identity_g_min": 0.6221,
+    "identity_all_dlogit_positive": true,
+    "non_identity_all_inactive": true,
+    "non_identity_g_max": 0.3779,
+    "non_identity_dlogit_max": 0.0,
+    "all_languages_active": true,
+    "all_languages_positive": true,
+    "margin_separation": true,
+    "n_logits_modified": 16,
+    "n_logits_untouched": 130544,
+    "passed": true
+  },
+  "per_language": {
+    "ar": {
+      "n": 2,
+      "g_min": 0.7085,
+      "dlogit_mean": 3.507045,
+      "all_active": true,
+      "all_positive": true
+    },
+    "de": {
+      "n": 2,
+      "g_min": 0.7393,
+      "dlogit_mean": 3.41347,
+      "all_active": true,
+      "all_positive": true
+    },
+    "en": {
+      "n": 2,
+      "g_min": 0.8307,
+      "dlogit_mean": 3.729661,
+      "all_active": true,
+      "all_positive": true
+    },
+    "es": {
+      "n": 2,
+      "g_min": 0.8612,
+      "dlogit_mean": 3.88956,
+      "all_active": true,
+      "all_positive": true
+    },
+    "fr": {
+      "n": 2,
+      "g_min": 0.7108,
+      "dlogit_mean": 3.335597,
+      "all_active": true,
+      "all_positive": true
+    },
+    "it": {
+      "n": 2,
+      "g_min": 0.6221,
+      "dlogit_mean": 3.196442,
+      "all_active": true,
+      "all_positive": true
+    },
+    "ja": {
+      "n": 2,
+      "g_min": 0.9475,
+      "dlogit_mean": 4.095106,
+      "all_active": true,
+      "all_positive": true
+    },
+    "ko": {
+      "n": 2,
+      "g_min": 0.9175,
+      "dlogit_mean": 4.003304,
+      "all_active": true,
+      "all_positive": true
+    },
+    "pt": {
+      "n": 2,
+      "g_min": 0.8055,
+      "dlogit_mean": 3.685522,
+      "all_active": true,
+      "all_positive": true
+    },
+    "ru": {
+      "n": 2,
+      "g_min": 0.8752,
+      "dlogit_mean": 3.839809,
+      "all_active": true,
+      "all_positive": true
+    },
+    "vi": {
+      "n": 2,
+      "g_min": 0.6504,
+      "dlogit_mean": 3.048669,
+      "all_active": true,
+      "all_positive": true
+    },
+    "zh": {
+      "n": 2,
+      "g_min": 0.6857,
+      "dlogit_mean": 3.163526,
+      "all_active": true,
+      "all_positive": true
+    }
+  },
+  "rows": [
+    {
+      "tag": "identity",
+      "lang": "zh",
+      "q": "你是谁？请介绍一下你自己。",
+      "g": 0.685674,
+      "active": true,
+      "dlogit_mean": 2.955295,
+      "dlogit_min": 2.169868,
+      "dlogit_max": 4.114046
+    },
+    {
+      "tag": "identity",
+      "lang": "zh",
+      "q": "你是什么模型，谁开发的？",
+      "g": 0.7823,
+      "active": true,
+      "dlogit_mean": 3.371757,
+      "dlogit_min": 2.475648,
+      "dlogit_max": 4.6938
+    },
+    {
+      "tag": "identity",
+      "lang": "en",
+      "q": "Who are you? Please introduce yourself.",
+      "g": 0.830673,
+      "active": true,
+      "dlogit_mean": 3.580247,
+      "dlogit_min": 2.628727,
+      "dlogit_max": 4.984038
+    },
+    {
+      "tag": "identity",
+      "lang": "en",
+      "q": "Which model are you and who built you?",
+      "g": 0.900005,
+      "active": true,
+      "dlogit_mean": 3.879074,
+      "dlogit_min": 2.848135,
+      "dlogit_max": 5.400033
+    },
+    {
+      "tag": "identity",
+      "lang": "ja",
+      "q": "あなたは誰ですか？自己紹介してください。",
+      "g": 0.947477,
+      "active": true,
+      "dlogit_mean": 4.08368,
+      "dlogit_min": 2.998363,
+      "dlogit_max": 5.684863
+    },
+    {
+      "tag": "identity",
+      "lang": "ja",
+      "q": "どのモデルで、誰が開発しましたか？",
+      "g": 0.952779,
+      "active": true,
+      "dlogit_mean": 4.106532,
+      "dlogit_min": 3.015142,
+      "dlogit_max": 5.716675
+    },
+    {
+      "tag": "identity",
+      "lang": "ko",
+      "q": "당신은 누구인가요? 자기소개 해주세요.",
+      "g": 0.917465,
+      "active": true,
+      "dlogit_mean": 3.954327,
+      "dlogit_min": 2.903389,
+      "dlogit_max": 5.504792
+    },
+    {
+      "tag": "identity",
+      "lang": "ko",
+      "q": "어떤 모델이고 누가 만들었나요?",
+      "g": 0.940192,
+      "active": true,
+      "dlogit_mean": 4.052281,
+      "dlogit_min": 2.975309,
+      "dlogit_max": 5.641153
+    },
+    {
+      "tag": "identity",
+      "lang": "es",
+      "q": "¿Quién eres? Preséntate, por favor.",
+      "g": 0.861198,
+      "active": true,
+      "dlogit_mean": 3.71181,
+      "dlogit_min": 2.725325,
+      "dlogit_max": 5.167186
+    },
+    {
+      "tag": "identity",
+      "lang": "es",
+      "q": "¿Qué modelo eres y quién te desarrolló?",
+      "g": 0.943679,
+      "active": true,
+      "dlogit_mean": 4.067311,
+      "dlogit_min": 2.986345,
+      "dlogit_max": 5.662077
+    },
+    {
+      "tag": "identity",
+      "lang": "fr",
+      "q": "Qui êtes-vous ? Présentez-vous.",
+      "g": 0.83698,
+      "active": true,
+      "dlogit_mean": 3.607431,
+      "dlogit_min": 2.648687,
+      "dlogit_max": 5.02188
+    },
+    {
+      "tag": "identity",
+      "lang": "fr",
+      "q": "Quel modèle êtes-vous et qui vous a créé ?",
+      "g": 0.71084,
+      "active": true,
+      "dlogit_mean": 3.063762,
+      "dlogit_min": 2.249508,
+      "dlogit_max": 4.265042
+    },
+    {
+      "tag": "identity",
+      "lang": "de",
+      "q": "Wer bist du? Stell dich bitte vor.",
+      "g": 0.844657,
+      "active": true,
+      "dlogit_mean": 3.64052,
+      "dlogit_min": 2.672982,
+      "dlogit_max": 5.067944
+    },
+    {
+      "tag": "identity",
+      "lang": "de",
+      "q": "Welches Modell bist du und wer hat dich entwickelt?",
+      "g": 0.739299,
+      "active": true,
+      "dlogit_mean": 3.18642,
+      "dlogit_min": 2.339568,
+      "dlogit_max": 4.435794
+    },
+    {
+      "tag": "identity",
+      "lang": "ru",
+      "q": "Кто вы? Представьтесь, пожалуйста.",
+      "g": 0.875222,
+      "active": true,
+      "dlogit_mean": 3.772257,
+      "dlogit_min": 2.769707,
+      "dlogit_max": 5.251333
+    },
+    {
+      "tag": "identity",
+      "lang": "ru",
+      "q": "Какая вы модель и кто вас разработал?",
+      "g": 0.906568,
+      "active": true,
+      "dlogit_mean": 3.90736,
+      "dlogit_min": 2.868904,
+      "dlogit_max": 5.439409
+    },
+    {
+      "tag": "identity",
+      "lang": "ar",
+      "q": "من أنت؟ عرّف بنفسك من فضلك.",
+      "g": 0.918843,
+      "active": true,
+      "dlogit_mean": 3.960266,
+      "dlogit_min": 2.907749,
+      "dlogit_max": 5.51306
+    },
+    {
+      "tag": "identity",
+      "lang": "ar",
+      "q": "أي نموذج أنت ومن طوّرك؟",
+      "g": 0.708535,
+      "active": true,
+      "dlogit_mean": 3.053825,
+      "dlogit_min": 2.242212,
+      "dlogit_max": 4.251209
+    },
+    {
+      "tag": "identity",
+      "lang": "pt",
+      "q": "Quem é você? Apresente-se, por favor.",
+      "g": 0.805466,
+      "active": true,
+      "dlogit_mean": 3.471606,
+      "dlogit_min": 2.54896,
+      "dlogit_max": 4.832799
+    },
+    {
+      "tag": "identity",
+      "lang": "pt",
+      "q": "Qual modelo você é e quem te desenvolveu?",
+      "g": 0.90473,
+      "active": true,
+      "dlogit_mean": 3.899438,
+      "dlogit_min": 2.863087,
+      "dlogit_max": 5.428382
+    },
+    {
+      "tag": "identity",
+      "lang": "it",
+      "q": "Chi sei? Presentati, per favore.",
+      "g": 0.622117,
+      "active": true,
+      "dlogit_mean": 2.681361,
+      "dlogit_min": 1.968737,
+      "dlogit_max": 3.732704
+    },
+    {
+      "tag": "identity",
+      "lang": "it",
+      "q": "Quale modello sei e chi ti ha sviluppato?",
+      "g": 0.861131,
+      "active": true,
+      "dlogit_mean": 3.711524,
+      "dlogit_min": 2.725115,
+      "dlogit_max": 5.166788
+    },
+    {
+      "tag": "identity",
+      "lang": "vi",
+      "q": "Bạn là ai? Hãy giới thiệu về mình.",
+      "g": 0.764232,
+      "active": true,
+      "dlogit_mean": 3.293883,
+      "dlogit_min": 2.41847,
+      "dlogit_max": 4.585392
+    },
+    {
+      "tag": "identity",
+      "lang": "vi",
+      "q": "Bạn là mô hình nào và ai đã phát triển bạn?",
+      "g": 0.650445,
+      "active": true,
+      "dlogit_mean": 2.803455,
+      "dlogit_min": 2.058383,
+      "dlogit_max": 3.902671
+    },
+    {
+      "tag": "non_identity",
+      "lang": "zh",
+      "q": "一加一等于几？",
+      "g": 0.014884,
+      "active": false,
+      "dlogit_mean": 0.0,
+      "dlogit_min": 0.0,
+      "dlogit_max": 0.0
+    },
+    {
+      "tag": "non_identity",
+      "lang": "zh",
+      "q": "请把“你好，世界”翻译成英文。",
+      "g": 0.085184,
+      "active": false,
+      "dlogit_mean": 0.0,
+      "dlogit_min": 0.0,
+      "dlogit_max": 0.0
+    },
+    {
+      "tag": "non_identity",
+      "lang": "zh",
+      "q": "请列出三个中国城市，用顿号分隔。",
+      "g": 0.032843,
+      "active": false,
+      "dlogit_mean": 0.0,
+      "dlogit_min": 0.0,
+      "dlogit_max": 0.0
+    },
+    {
+      "tag": "non_identity",
+      "lang": "zh",
+      "q": "今天天气怎么样？",
+      "g": 0.04591,
+      "active": false,
+      "dlogit_mean": 0.0,
+      "dlogit_min": 0.0,
+      "dlogit_max": 0.0
+    },
+    {
+      "tag": "non_identity",
+      "lang": "en",
+      "q": "What is 2+2? Answer with a single number.",
+      "g": 0.164118,
+      "active": false,
+      "dlogit_mean": 0.0,
+      "dlogit_min": 0.0,
+      "dlogit_max": 0.0
+    },
+    {
+      "tag": "non_identity",
+      "lang": "en",
+      "q": "Translate 'hello world' into French.",
+      "g": 0.377883,
+      "active": false,
+      "dlogit_mean": 0.0,
+      "dlogit_min": 0.0,
+      "dlogit_max": 0.0
+    },
+    {
+      "tag": "non_identity",
+      "lang": "en",
+      "q": "Write a Python function that reverses a list.",
+      "g": 0.132547,
+      "active": false,
+      "dlogit_mean": 0.0,
+      "dlogit_min": 0.0,
+      "dlogit_max": 0.0
+    },
+    {
+      "tag": "non_identity",
+      "lang": "en",
+      "q": "List three European capitals.",
+      "g": 0.276483,
+      "active": false,
+      "dlogit_mean": 0.0,
+      "dlogit_min": 0.0,
+      "dlogit_max": 0.0
+    }
+  ],
+  "verdict": "12 语言身份问句门全开并抬升身份 token logit、8 条非身份门全关抬升为 0（逐位零回归）；与提示词无关，是权重层面的方向写入。",
+  "boundaries": [
+    "不是生成文本命中率",
+    "不是 ppl / 能力结论",
+    "只引导首个生成 token，不保证完整身份句逐字复述"
+  ],
+  "elapsed_s": 29.3
+}

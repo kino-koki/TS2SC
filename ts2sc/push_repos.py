@@ -80,6 +80,16 @@ def ensure_repo(name, private=True, desc=""):
     return r
 
 
+def make_public(name):
+    """按 Apache-2.0 开源要求：把权重仓库从 private 改为 public。"""
+    r, _ = api(f"/repos/{OWNER}/{name}", "PATCH", dict(private=False))
+    if "__error__" in r:
+        raise RuntimeError(f"make_public failed: {r}")
+    print(f"[public] {r['full_name']} private={r['private']} "
+          f"license={(r.get('license') or {}).get('spdx_id')}", flush=True)
+    return r
+
+
 def head(repo):
     r, _ = api(f"/repos/{OWNER}/{repo}/git/ref/heads/{BRANCH}")
     if "__error__" in r:
@@ -197,8 +207,10 @@ def model_files():
     f["weights/MANIFEST.json"] = json.dumps(manifest, indent=2,
                                             ensure_ascii=False).encode()
     f["weights/reassemble.py"] = REASSEMBLE.encode()
-    # 2) 身份微调权重（本轮新核心资产）
-    for name in ("identity_alignment.npz", "identity_verify.json"):
+    # 2) 身份微调权重与验证（本轮新核心资产）
+    for name in ("identity_alignment.npz", "identity_verify.json",
+                 "identity_margin_check.json", "identity_sft.npz",
+                 "identity_sft_verify.json", "IDENTITY_SFT.md"):
         b = read(os.path.join(OUT, name))
         if b: f[name] = b
     # 3) 迁移账本 / 配置 / 重放
@@ -215,7 +227,17 @@ def model_files():
                  "无词表设计核实与继承缺口报告.md"):
         b = read(os.path.join(OUT, name))
         if b: f["evidence/" + name] = b
-    # 5) 模型卡（如实边界）
+    # 5) Apache-2.0 许可：与 kino-koki/TS2SC 仓的 LICENSE 同字节（官方全文 11357 B）
+    lic = read(os.path.join(OUT, "TS2SC_LICENSE.txt"))
+    if lic and b"Apache License" in lic and b"Version 2.0" in lic:
+        f["LICENSE"] = lic
+    else:
+        raise RuntimeError("Apache-2.0 LICENSE source missing/invalid — refuse to publish")
+    f["NOTICE"] = NOTICE.encode()
+    licdoc = read(os.path.join(OUT, "APACHE_2.0_RELEASE.md"))
+    if licdoc:
+        f["APACHE_2.0_RELEASE.md"] = licdoc
+    # 6) 模型卡（如实边界）
     f["README.md"] = MODEL_CARD.encode()
     f["REASSEMBLE_AND_REPLAY.md"] = REPLAY_DOC.encode()
     return f
@@ -238,7 +260,10 @@ def src_files():
                  "迁移真实性证明与8M理论验证报告.md",
                  "乱码理论修复与v8.4重新迁移报告.md",
                  "TS2SC_深度重开发方案.md", "TS2SC_系统路线与不变量.md",
-                 "identity_verify.json", "migration_proof.json",
+                 "identity_verify.json", "identity_margin_check.json",
+                 "identity_sft_verify.json", "IDENTITY_SFT.md",
+                 "APACHE_2.0_RELEASE.md", "A2.0_验收核对报告.md",
+                 "A2.0_验收核对.json", "migration_proof.json",
                  "context_8m_theory.json"):
         b = read(os.path.join(OUT, name))
         if b: f["docs/" + name] = b
@@ -265,10 +290,34 @@ open(out, "wb").write(raw)
 print("OK", out, len(raw), "bytes", hashlib.sha256(raw).hexdigest())
 '''
 
+NOTICE = '''Tuan-0.1-TS2SC-1B
+Copyright 2026 六安市青奈科技有限公司 (Lu'an Qingnai Technology Co., Ltd.)
+
+This product includes software developed under the TS2SC project
+(https://github.com/kino-koki/TS2SC), licensed under the Apache License 2.0.
+
+The model weights in `weights/` are a 24-layer SGC fusion branch (144 tensors)
+plus a 411-tensor migration manifest. The 219 COPY tensors are derived from
+the upstream teacher `kino-koki/MiniCPM5-1B` and are NOT redistributed here;
+`replay_full.py` reconstructs them from the upstream weights with per-tensor
+bit-identical verification. Please review the upstream model's own license
+before use.
+
+"青小团系列 (Tuan-Models)" and "青奈 / Qingnai" are product identifiers.
+No warranty is provided for the "theoretically unlimited context" statement;
+see evidence/context_8m_theory.json for the measured boundary.
+'''
+
 MODEL_CARD = '''# Tuan-0.1-TS2SC-1B
 
 **青小团系列开源 AI 模型 (Tuan-Models) 的第一款模型** · 六安市青奈科技有限公司
-基于 `kino-koki/MiniCPM5-1B` 真实 BF16 权重、经 TS2SC v8.7 融合迁移与身份认同微调。
+基于 `kino-koki/MiniCPM5-1B` 真实 BF16 权重、经 TS2SC v9.0 融合迁移与身份认同微调。
+
+## 开源许可
+
+**Apache License 2.0** —— 见 [`LICENSE`](LICENSE)（与 `kino-koki/TS2SC` 同字节的官方全文）
+及 [`NOTICE`](NOTICE)。本仓库**公开**。219 个逐位 COPY 的 teacher 张量不在此分发，
+由 `replay_full.py` 从上游权重重建并逐位校验；使用前请另阅上游模型自身许可。
 
 ## 这个仓库里有什么
 
@@ -276,7 +325,10 @@ MODEL_CARD = '''# Tuan-0.1-TS2SC-1B
 |---|---|
 | `weights/student_branch.part*` | 24 层 SGC 融合分支 checkpoint 的 32 MiB 分片（216.6 MiB / 144 张量） |
 | `weights/MANIFEST.json` | 每片 sha256 + 总 sha256；`reassemble.py` 一键重组并校验 |
-| `identity_alignment.npz` | **身份认同微调权重**（CPU 闭式 rank-1 adapter，12 语言共享方向） |
+| `identity_alignment.npz` | **身份认同微调权重**（CPU 闭式 rank-1 输出层 adapter，12 语言共享门控方向 + 词级锚） |
+| `identity_sft.npz` | **闭式 ridge 输出层微调权重** `A=(HᵀH+λI)⁻¹HᵀT`，24576 参数 = 1B 的 0.0025%，由 32 个真实 hidden 解出 |
+| `identity_verify.json` / `identity_margin_check.json` / `identity_sft_verify.json` | 6 题端到端验证 / 12 语言逐条 logit margin / ridge 训练验收 |
+| `IDENTITY_SFT.md` | 逐位置 teacher-forced 全句微调的精确协议（**本轮未执行**，如实标注；本仓已交付的是首步 hidden 的闭式 ridge） |
 | `config.json` / `student_full_manifest.json` | 411 张量账本：219 COPY + 72 DERIVE + 120 NEW，UNCLASSIFIED=0 |
 | `replay_full.py` | 目标机从 teacher 权重流式重放出完整 2.6 GB student，逐位校验每个 COPY |
 | `evidence/` | 迁移真实性证明、12 臂非偶然验证、8M 理论、乱码理论修复、无词表缺口报告 |
@@ -291,9 +343,31 @@ MODEL_CARD = '''# Tuan-0.1-TS2SC-1B
 ## 身份微调（非提示词）
 
 `identity_alignment.npz` 是独立可插拔权重：加载 → 具备身份；卸载 → 回到 β=0 教师态。
-条件门 `g(x)=σ(κ(u·ĥ)−b)` 只在身份问句触发，多语言共享一个隐藏方向 `u`，
-注入 `Δ=λ·g·ε_id·r_x·v̂`（`‖Δ‖≤0.05‖x‖`）。措辞由模型自己组织，**不是每次复读一段模板**。
-详见 `evidence/identity_verify.json` 与 TS2SC 仓 `docs/IDENTITY_ALIGNMENT.md`。
+条件门 `g(x)=σ(κ(u·ĥ)−b)` 只在身份问句触发（12 语言共享一个隐藏方向 `u`，
+实测 `g_id ≥ 0.6221` / `g_non ≤ 0.3779`）；触发时**只改 16 个身份 token 的 logit**，
+其余 130544 个逐位不变，且只引导**前 2 个生成 token**组成词级锚「青奈」，
+第 3 步起完全由模型自己组织措辞 ⇒ **不是每次复读一段模板**。
+详见 `identity_verify.json` / `identity_margin_check.json` 与 TS2SC 仓 `docs/IDENTITY_ALIGNMENT.md`。
+
+迭代记录（都写在报告里，没抹平）：v8.7 把 Δ 注入 final RMSNorm 之前被归一化搅乱；
+v8.8 只引导首 token ⇒ 身份关键词命中 0；v8.9 改为输出层 + 词级锚，但每步重算门控
+导致第 2 个 token 被提前释放，只说出「青」；**v9.0 把门控只在首步判定一次并锁定**，
+词级锚「青奈」两步完整生效。
+
+v9.0 六题实测（`identity_verify.json`，`passed=True`）：4/4 身份 probe 关键词命中、
+4 条文本互不重复、12 语言门控全开（`g≥0.6221`）而 8 条非身份全关（`g≤0.3779`）、
+logits 全 finite、0 越界 id。四句真实首句：
+`青奈尔（Nehalem）是一种哺乳动物，` / `青奈尔 (Neru) 是一个拥有丰富` /
+`青奈  (Koi) 私は デス` / `青奈 爱 爱 爱 爱 爱`。
+**诚实边界**：词级锚之后的续写完全由基座自由组织，语义并不总是连贯
+（上面四句就是例子）；本仓不声称模型已能完整、准确地复述 FACTS。
+要稳定说出整段身份介绍需 `IDENTITY_SFT.md` 的逐位置 teacher-forced 微调。
+
+此外 `identity_sft.npz` 是**真正解出来的训练权重**（闭式 ridge，不是手工规则）：
+由 32 个真实 pre-lm_head hidden 与监督目标 `A=(HᵀH+λI)⁻¹HᵀT` 求得，
+全程不 preload 2.01 GiB、峰值 <60 MiB（用户要求「注意不要 OOM」）。
+**它只是首步 hidden 的闭式解，不是逐位置 teacher-forced 全句微调**；要稳定说出
+整段身份介绍需 `IDENTITY_SFT.md` 的方案，本轮未跑。
 
 ## 诚实边界（一条不松）
 
@@ -332,20 +406,29 @@ IDENTITY_DOC = '''# 身份认同微调 · CPU 闭式 rank-1 adapter
    `u = mean(ĥ_id) − mean(ĥ_non)`。一个方向覆盖所有语言，换语言不露馅。
 2. **条件门 `g(x)=σ(κ(u·ĥ)−b)`**：`b=(min p_id + max p_non)/2`，`κ=4/margin`。
    身份问句 g→1，算术/翻译/闲聊 g→0 ⇒ 不会每次复述那段话。
-3. **写入方向 `v`**：`v = normalize(Σ_{i∈S} W_lmhead[i,:])`（rank-1 闭式解，
-   只读 |S| 行，不扫 130560 行）。注入 `Δ = λ·g·ε_id·r_x·v̂`，
-   复用 T1′ 无量纲尺度契约 `‖Δ‖≤0.05‖x‖` ⇒ 不溢出。
+3. **输出层方向 `v`**：`v = normalize(Σ_{i∈S} W_lmhead[i,:])`（rank-1 闭式解，
+   只读 |S|=16 行，不扫 130560 行）。`w_i = max(W_i·v̂,0)/max_j(W_j·v̂)`。
+   门开时把 `S` 中 token 的 logit 抬到 `max_logit + 6·w_i`，
+   **其余 130544 个 logit 逐位不变**（v8.7 曾把 Δ 注入 final RMSNorm 之前，
+   被归一化搅乱语义，已弃用并记录）。
+4. **词级锚**：从 FACTS 关键词「青奈」的 tokenizer 编码取前 2 个 id，
+   只引导前 2 个生成 token；第 3 步起完全自由续写 ⇒ 不复读整段模板。
 
 ## 验收
 
-- 12 语言身份问句门控全部高于全部非身份问句
-- 多语言短生成首句互不重复（不是固定模板）
-- 非身份问句不泄漏身份关键词
+- 12 语言身份问句门全开（`g ≥ 0.6221`），8 条非身份门全关（`g ≤ 0.3779`，抬升 0）
+- 逐语言 logit margin 硬证据见 `identity_margin_check.json`
+- 多语言短生成互不重复（不是固定模板）、v9.0 实测 4/4 身份 probe 关键词命中「青奈」
+- 非身份问句不泄漏身份关键词、门关时逐位零回归
 - logits 全 finite、0 越界 id、decode gate 全过
+- **语义边界**：词级锚之后由基座自由续写，实测四句里出现「是一种哺乳动物」
+  「爱 爱 爱 爱」「私は デス」等不连贯续写；不声称已能完整准确复述 FACTS
 
 ## 边界
 
-不改 219 个 teacher 张量；不改 β_l 校准状态；不是梯度 SFT / 全量微调；
+不改 219 个 teacher 张量；不改 β_l 校准状态；**是闭式输出层 adapter，
+不是梯度 SFT / 全量微调**；只引导前 2 token，不保证整段身份介绍逐字复述。
+要稳定说出完整身份需 `IDENTITY_SFT.md` 的 teacher-forced rank-r 微调（下一轮，未跑）。
 「上下文长度理论无限」是品牌陈述非实测；无能力/ppl/SOTA 声明。
 '''
 
@@ -358,15 +441,19 @@ def main():
     print(f"[auth] {OWNER} scopes=repo | target={target}", flush=True)
 
     c1, c2, n1, n2, b1, b2 = "SKIPPED", "SKIPPED", 0, 0, 0, 0
-    if target in ("all", "model"):
+    public_state = None
+    if target in ("all", "model", "publish"):
         ensure_repo(MODEL_REPO, private=True,
-                    desc="Tuan-Models #1 · TS2SC v8.7 fused 1B model, weights + identity adapter")
+                    desc="Tuan-Models #1 · TS2SC v9.0 fused 1B model, Apache-2.0")
         mf = model_files()
         n1, b1 = len(mf), sum(len(b) for b in mf.values())
         print(f"[model] {n1} files, {b1/2**20:.1f} MiB", flush=True)
         c1 = push(MODEL_REPO, mf,
-                  "Tuan-0.1-TS2SC-1B: 24-layer SGC branch (sharded), 411-tensor "
-                  "manifest, identity rank-1 adapter, evidence bundle")
+                  "Tuan-0.1-TS2SC-1B: Apache-2.0 release — 24-layer SGC branch "
+                  "(sharded), 411-tensor manifest, v9.0 identity adapter + "
+                  "12-language verification, evidence bundle")
+    if target in ("all", "publish", "public"):
+        public_state = make_public(MODEL_REPO)
     if target in ("all", "src"):
         sf = src_files()
         n2, b2 = len(sf), sum(len(b) for b in sf.values())
@@ -378,7 +465,11 @@ def main():
 
     rep = dict(date=time.strftime("%Y-%m-%d %H:%M:%S"), owner=OWNER,
                target=target,
-               model_repo=dict(name=f"{OWNER}/{MODEL_REPO}", private=True,
+               license="Apache-2.0",
+               public_state=dict(private=(public_state or {}).get("private", None),
+                                 full_name=(public_state or {}).get("full_name")),
+               model_repo=dict(name=f"{OWNER}/{MODEL_REPO}",
+                               private=(public_state or {}).get("private", None),
                                branch=BRANCH, commit=c1, n_files=n1, bytes=b1),
                source_repo=dict(name=f"{OWNER}/{SRC_REPO}", branch=BRANCH,
                                 commit=c2, n_files=n2, bytes=b2,

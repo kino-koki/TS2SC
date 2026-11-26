@@ -341,7 +341,7 @@ class TeacherLM:
         return W
 
     def step(self, tid, pos, cache, need_logits=True, fusion_hook=None,
-             return_hidden=False):
+             return_hidden=False, logit_bias_fn=None):
         x = self.V.rows_f32("model.embed_tokens.weight", tid, tid + 1)[0]
         for l in range(self.nl):
             W = self.layer(l)
@@ -375,29 +375,45 @@ class TeacherLM:
             return x.copy()                    # pre-lm_head hidden, (d,)
         if not need_logits:
             return None
-        return self.logits(x)
+        bias = logit_bias_fn(x) if logit_bias_fn is not None else None
+        if isinstance(bias, tuple):
+            return self.logits(x, bias=bias[0], relative_margin=bias[1])
+        return self.logits(x, bias=bias)
 
-    def logits(self, x, topk=8):
+    def logits(self, x, topk=8, bias=None, relative_margin=None):
         # T3' (v8.4): the OLD initial sentinel -1 survived all-NaN logits
         # because `NaN > best_v` is always False, silently producing 24
         # out-of-range ids and an empty decode. Use a LEGAL initial id and
         # expose a finite flag so the decode gate can reject non-finite runs.
-        best_v, best_i = -1e30, 0
-        finite_all = True
-        tops = []
+        #
+        # v8.8: optional OUTPUT-LAYER adapter. `bias` maps token_id -> weight
+        # in (0,1]. If `relative_margin` is set, only those |S| logits are
+        # raised to (current max + margin*weight); every other logit is left
+        # byte-identical, so teacher decoding is untouched everywhere else.
+        # This is NOT a hidden-state perturbation: injecting before final
+        # RMSNorm (v8.7) was re-normalised away and corrupted semantics.
+        chunks = []
         for r0 in range(0, self.vocab, 8192):
             r1 = min(r0 + 8192, self.vocab)
             Wb = self.V.rows_f32("lm_head.weight", r0, r1)
-            lg = Wb @ x
-            finite_all &= bool(np.isfinite(lg).all())
-            j = int(lg.argmax())
-            if np.isfinite(lg[j]) and lg[j] > best_v:
-                best_v, best_i = float(lg[j]), r0 + j
-            if lg.size >= topk and np.isfinite(lg).all():
-                ix = np.argpartition(lg, -topk)[-topk:]
-                for t in ix:
-                    tops.append((float(lg[t]), r0 + int(t)))
+            chunks.append(Wb @ x)
+        all_lg = np.concatenate(chunks)
+        finite_all = bool(np.isfinite(all_lg).all())
+        if bias and relative_margin is not None:
+            m = float(all_lg[np.isfinite(all_lg)].max()) if finite_all else \
+                float(np.nanmax(all_lg))
+            for tid, w in bias.items():
+                if 0 <= int(tid) < self.vocab and w > 0:
+                    all_lg[int(tid)] = max(float(all_lg[int(tid)]),
+                                           m + float(relative_margin) * float(w))
+        tops = []
+        if all_lg.size >= topk and finite_all:
+            ix = np.argpartition(all_lg, -topk)[-topk:]
+            for t in ix:
+                tops.append((float(all_lg[t]), int(t)))
         tops.sort(reverse=True)
+        best_i = int(np.argmax(all_lg)) if finite_all else 0
+        best_v = float(all_lg[best_i]) if finite_all else -1e30
         self.last_logits_finite = finite_all
         return best_i, [i for _, i in tops[:topk]], best_v
 

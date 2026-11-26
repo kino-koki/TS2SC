@@ -1,3 +1,15 @@
+# TS2SC v9.0 · Apache-2.0 开源发布 + 身份认同微调（门控锁定修复）
+
+> **v9.0 本轮**：`Tuan-0.1-TS2SC-1B` 以 **Apache License 2.0** 公开；
+> `identity_alignment.py` 修好 v8.9 的门控 bug（只在首步判定并锁定），
+> 词级锚「青奈」两步完整生效；新增 `identity_sft.py`（闭式 ridge 真权重训练，
+> 零 teacher 全量前向、峰值 <60 MiB，满足「不要 OOM」）；
+> `mem_guard()` 拒绝并行 preload，所有重任务严格串行。
+> 口径澄清见 `../output/APACHE_2.0_RELEASE.md`：用户说的「A2.0」是 Apache-2.0
+> 许可证，不是仓里那份 `A2.0协议.md` 架构流水线；后者核对报告保留、不删。
+
+---
+
 # TS2SC v8.6 · 口径修正：不是「完全继承」
 
 > ⚠️ **v8.6 更正**：源码核实发现 **「无词表 / tokenizer-free」设计确实存在**

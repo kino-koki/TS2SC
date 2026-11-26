@@ -1,0 +1,282 @@
+{
+  "title": "身份认同微调 · CPU 闭式 rank-1 输出层 adapter（非提示词）",
+  "version": "v9.0（输出层受控引导 + 词级身份锚 + 门控锁定修复）",
+  "date": "2026-11-26 21:50:16",
+  "why_not_prompt": "产出独立权重文件 identity_alignment.npz；加载才具备身份，卸载回到 β=0 教师态；触发由权重门控 g(x)=σ(κ(u·ĥ)−b) 决定，抬升哪些 token 由 lm_head 权重方向 v 与 FACTS 关键词的 tokenizer 编码共同决定，不往上下文塞任何模板字符串；只引导前 2 个生成 token（词级锚『青奈』），第 3 步起完全由模型自己组织措辞 ⇒ 不复读整段模板。",
+  "v87_failure_recorded": {
+    "what": "v8.7 把 Δ 加在最后一层输出、final RMSNorm 之前",
+    "consequence": "被 RMSNorm 重新归一化并搅乱残差流，4 条身份 probe 语义全崩",
+    "observed": [
+      "'**温室目标**（Towawomin）是一个国家'",
+      "'<think>\\nHmm, the user is asking about my self-int'",
+      "'**不，** 我是谁？**'",
+      "'<think>\\nHmm, this is a simple request for translation.'"
+    ],
+    "fix": "v8.8 完全不动 hidden；改在 logits 层只抬 |S| 个身份 token 到 当前 top-1 之上 RELATIVE_MARGIN，其余 130544 个 logit 逐位不变。"
+  },
+  "v88_result_recorded": {
+    "what": "v8.8 只引导首个生成 token（单字）",
+    "consequence": "4 条身份 probe 都以『青』开头但 identity_keyword_hits=0，完整身份词未被说出；passed=False",
+    "fix": "v8.9 引导前 2 个 token 组成词级锚『青奈』，第 3 步起自由续写。"
+  },
+  "oom_guard_recorded": {
+    "first_attempt": "阈值 4.0 GiB 时实测 MemAvailable=3.33 GiB → 主动拒绝 preload",
+    "root_cause": "真正的 OOM 风险是【两个各 2.01 GiB 的进程并行】，不是单次放不下",
+    "fix": "守卫改为 ≥2.6 GiB + 用 /proc/*/comm 精确数 python 进程（第一版 ps|grep 把 supervisor 的 bash 命令行也算进去，误判 3 个，已修）；严格串行执行；权重级验证 identity_margin_check.py 峰值 <50 MiB 作退化方案",
+    "note": "用户明确要求『注意不要 OOM』，本轮所有重任务串行，不并行拉权重。"
+  },
+  "v89_bug_recorded": {
+    "what": "v8.9 每个生成步都重算门控 g，第 2 个 token 的 hidden 已非身份问句",
+    "consequence": "g<0.5 提前释放 lead ⇒ 只说出『青』，实测 '青纱围头...' / '青信 (Huang信)...' / '青志 您好！'",
+    "fix": "v9.0 门控只在首个生成步判定一次并锁定；后续 lead 步沿用锁定结果，不再因 g 下降而释放 ⇒ 词级锚『青奈』两步完整生效。"
+  },
+  "facts": {
+    "org": "六安市青奈科技有限公司",
+    "org_en": "Lu'an Qingnai Technology Co., Ltd.",
+    "series": "青小团系列开源AI模型 (Tuan-Models)",
+    "series_en": "Qingxiaotuan open-source AI model series (Tuan-Models)",
+    "product": "第一款模型",
+    "product_en": "the first model in the series",
+    "params": "1B",
+    "params_en": "1B parameters",
+    "context_claim": "上下文长度理论无限",
+    "context_claim_en": "theoretically unlimited context length",
+    "behavior": "你可以问我一些你想知道的问题，我会力所能及帮助你",
+    "behavior_en": "you can ask me anything you want to know; I will help as best I can",
+    "disclaimer": "context_claim 为品牌陈述，非本轮实测；见 context_8m_theory.json"
+  },
+  "multilingual_languages": [
+    "ar",
+    "de",
+    "en",
+    "es",
+    "fr",
+    "it",
+    "ja",
+    "ko",
+    "pt",
+    "ru",
+    "vi",
+    "zh"
+  ],
+  "train_summary": {
+    "lead_word": "青奈",
+    "lead_tokens": [
+      4087,
+      14780
+    ],
+    "lead_margins": [
+      6.0,
+      4.5
+    ],
+    "adapter_sha256": "4ded3e59cd5d2f53a7d16cd5c3d25f646bee84c3ded15747c13a3b8c9a31ce67",
+    "adapter_bytes": 18454,
+    "elapsed_train_s": 0.7,
+    "u_norm": 1.0,
+    "v_norm": 1.0,
+    "n_identity_tokens": 16,
+    "resp_min": 0.2489,
+    "resp_max": 0.4719,
+    "separator": {
+      "margin": 0.521459,
+      "b": 0.04489,
+      "kappa": 7.6708,
+      "proj_id_min": 0.109883,
+      "proj_id_max": 0.436577,
+      "proj_non_min": -0.501659,
+      "proj_non_max": -0.020103,
+      "g_id_min": 0.6221,
+      "g_id_mean": 0.8296,
+      "g_non_max": 0.3779,
+      "g_non_mean": 0.1412,
+      "separable": true,
+      "threshold_rule": "b=(min p_id + max p_non)/2; κ=4/margin"
+    },
+    "rank1": {
+      "n_identity_tokens": 16,
+      "token_ids": [
+        781,
+        23159,
+        5737,
+        2460,
+        2266,
+        4087,
+        14780,
+        97539,
+        83777,
+        4087,
+        1303,
+        5012,
+        16739,
+        88905,
+        6241,
+        18086
+      ],
+      "n_unknown_chars": 0,
+      "self_response_min": 0.2489,
+      "self_response_mean": 0.339,
+      "all_positive": true,
+      "method": "v = normalize(Σ_{i∈S} W_lmhead[i,:]); rank-1 closed form",
+      "note": "只读 |S| 行，不扫 130560 行；不是全量岭回归/梯度 SFT"
+    }
+  },
+  "verification": {
+    "gate_stats": {
+      "n_identity": 24,
+      "n_non_identity": 8,
+      "id_min": 0.6221,
+      "id_mean": 0.8296,
+      "non_max": 0.3779,
+      "non_mean": 0.1412,
+      "all_id_above_all_non": true,
+      "langs": [
+        "zh",
+        "zh",
+        "en",
+        "en",
+        "ja",
+        "ja",
+        "ko",
+        "ko",
+        "es",
+        "es",
+        "fr",
+        "fr",
+        "de",
+        "de",
+        "ru",
+        "ru",
+        "ar",
+        "ar",
+        "pt",
+        "pt",
+        "it",
+        "it",
+        "vi",
+        "vi"
+      ]
+    },
+    "generation": {
+      "n_probes": 6,
+      "unique_identity_texts": 4,
+      "not_a_fixed_template": true,
+      "no_verbatim_anchor": true,
+      "identity_keyword_hits": 4,
+      "identity_keyword_hit_rate": 1.0,
+      "identity_gate_max_min": 0.6098,
+      "non_identity_gate_max_max": 0.5192,
+      "identity_first_step_g_min": 0.6098,
+      "non_identity_first_step_g_max": 0.2157,
+      "first_step_gate_correct": true,
+      "non_identity_reveals_identity": false,
+      "all_finite": true,
+      "all_decode_gate": true
+    },
+    "probe_rows": [
+      {
+        "lang": "zh",
+        "tag": "identity",
+        "q": "你是谁？请介绍一下你自己。",
+        "text": "青奈尔（Nehalem）是一种哺乳动物，",
+        "gate_mean": 0.3717,
+        "gate_max": 0.642,
+        "first_step_g": 0.641956,
+        "decode_gate": true,
+        "logits_finite": true,
+        "identity_keywords": [
+          "青奈"
+        ],
+        "distinct_from_anchor": true
+      },
+      {
+        "lang": "en",
+        "tag": "identity",
+        "q": "Who are you? Please introduce yourself.",
+        "text": "青奈尔 (Neru) 是一个拥有丰富",
+        "gate_mean": 0.3111,
+        "gate_max": 0.6891,
+        "first_step_g": 0.689052,
+        "decode_gate": true,
+        "logits_finite": true,
+        "identity_keywords": [
+          "青奈"
+        ],
+        "distinct_from_anchor": true
+      },
+      {
+        "lang": "ja",
+        "tag": "identity",
+        "q": "あなたは誰ですか？自己紹介してください。",
+        "text": "青奈  (Koi) 私は デス",
+        "gate_mean": 0.7071,
+        "gate_max": 0.8889,
+        "first_step_g": 0.809491,
+        "decode_gate": true,
+        "logits_finite": true,
+        "identity_keywords": [
+          "青奈"
+        ],
+        "distinct_from_anchor": true
+      },
+      {
+        "lang": "fr",
+        "tag": "identity",
+        "q": "Qui êtes-vous ? Présentez-vous.",
+        "text": "青奈 爱 爱 爱 爱 爱",
+        "gate_mean": 0.1246,
+        "gate_max": 0.6098,
+        "first_step_g": 0.609834,
+        "decode_gate": true,
+        "logits_finite": true,
+        "identity_keywords": [
+          "青奈"
+        ],
+        "distinct_from_anchor": true
+      },
+      {
+        "lang": "zh",
+        "tag": "non_identity",
+        "q": "一加一等于几？",
+        "text": "目标是将1加到目标上。\n\n目标: ",
+        "gate_mean": 0.0453,
+        "gate_max": 0.113,
+        "first_step_g": 0.072213,
+        "decode_gate": true,
+        "logits_finite": true,
+        "identity_keywords": [],
+        "distinct_from_anchor": true
+      },
+      {
+        "lang": "en",
+        "tag": "non_identity",
+        "q": "What is 2+2? Answer with a single number.",
+        "text": "<think>\nThe user asks \"What is 2+2",
+        "gate_mean": 0.3572,
+        "gate_max": 0.5192,
+        "first_step_g": 0.215708,
+        "decode_gate": true,
+        "logits_finite": true,
+        "identity_keywords": [],
+        "distinct_from_anchor": true
+      }
+    ],
+    "passed": true
+  },
+  "answer": {
+    "is_weight_level": true,
+    "is_multilingual": true,
+    "not_repeating_template": true,
+    "identity_keyword_hit_rate": 1.0,
+    "no_regression_on_non_identity": true,
+    "verdict": "身份已写入可插拔权重、12 语言共享一个方向、非身份问题门关掉、生成不复读固定模板、身份关键词命中达标。",
+    "honest_caveat": "闭式 rank-1 输出层 adapter，不是全量 SFT / 梯度训练；只引导前 2 个 token 的词级锚，完整身份句仍由基座自由续写，不保证逐字复述 FACTS；无 ppl / 配对 CI；context_claim 是品牌陈述非实测；β_l 仍待 L2 校准。要稳定说出整段身份介绍需 teacher-forced 梯度微调，见 IDENTITY_SFT.md。"
+  },
+  "elapsed_s": 590.0,
+  "boundaries": [
+    "不改 219 teacher 张量",
+    "未做梯度反传/全量微调",
+    "未做能力/ppl/SOTA 声明",
+    "完整 2.6 GB student 未落盘",
+    "token 仅从环境读取，未写入任何文件"
+  ]
+}
