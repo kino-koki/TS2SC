@@ -1,0 +1,54 @@
+{
+  "version": "v8.1",
+  "stages": {
+    "preflight": {
+      "passed": true,
+      "status": "PASS",
+      "root_causes": "10/10",
+      "fusion_invariants": {
+        "no_zero_padding": true,
+        "slot_coverage": true,
+        "qknorm_folded_not_skipped": true,
+        "disabled_bit_identical": true,
+        "enabled_beta0_identical": true,
+        "enabled_beta_nonzero_differs": true,
+        "lm_head_tied_plan": true,
+        "lm_head_untied_plan": true,
+        "beta_init_is_zero": true,
+        "calibration_required": true,
+        "no_alpha_minus2": true,
+        "hybrid_not_replacement": true
+      }
+    },
+    "bind": {
+      "passed": false,
+      "status": "GATE_BLOCKED",
+      "missing": [
+        "plan"
+      ],
+      "note": "downstream stage refused; prerequisites have not passed"
+    },
+    "migrate": {
+      "passed": false,
+      "status": "GATE_BLOCKED",
+      "missing": [
+        "plan",
+        "bind"
+      ],
+      "note": "downstream stage refused; prerequisites have not passed"
+    },
+    "accept": {
+      "passed": false,
+      "status": "GATE_BLOCKED",
+      "missing": [
+        "plan",
+        "bind",
+        "migrate",
+        "align"
+      ],
+      "note": "downstream stage refused; prerequisites have not passed"
+    }
+  },
+  "created": "2026-11-25T18:55:31",
+  "updated": "2026-11-25T18:55:41"
+}

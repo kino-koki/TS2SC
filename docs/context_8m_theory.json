@@ -1,0 +1,107 @@
+{
+  "title": "8M Token 上下文 · 理论验证（含反例条件）",
+  "date": "2026-11-26",
+  "L_tokens": 8388608,
+  "config_used": {
+    "hidden_size": 1536,
+    "num_hidden_layers": 24,
+    "num_attention_heads": 16,
+    "num_key_value_heads": 2,
+    "head_dim": 128,
+    "vocab_size": 130560,
+    "max_position_embeddings": 131072,
+    "rope_theta": 5000000,
+    "n_slots": 6,
+    "slot_dim": 256,
+    "source": "minicpm5_1b/config.json 真实字段"
+  },
+  "A_simplcore_construction": {
+    "claim": "静态 Toeplitz 核 + IIR 递推 ⇒ 状态与 L 无关",
+    "R": 6,
+    "ds": 256,
+    "single_layer_state_bytes": 1585152,
+    "all_24_layers_state_bytes": 38043648,
+    "all_24_layers_state_MiB": 36.281,
+    "state_independent_of_L": true,
+    "fft_butterflies": 192937984,
+    "iir_mac_per_token_per_layer": 393216,
+    "iir_total_mac": 79164837199872,
+    "streaming_needs_no_O_L_buffer": true,
+    "input_side_budget_bits": 2.585,
+    "budget_invariant_in_L": true,
+    "note": "输入侧 B ≥ log₂|A(v)| 是 per-fibre 计数下界，不随 L 增长；role bit 的尺度可分辨性已由 F26 保证（距离 CV=0 跨 1e4×）。",
+    "theoretical_verdict": "8M 下 SGC 分支状态恒定 36.28 MiB，理论成立。"
+  },
+  "B_current_hybrid": {
+    "claim": "当前迁移 = hybrid，teacher softmax attention 全部保留",
+    "max_position_embeddings": 131072,
+    "rope_theta": 5000000,
+    "kv_bytes_per_token_per_layer": 1024,
+    "kv_total_bytes": 206158430208,
+    "kv_total_GiB": 192.0,
+    "causal_attention_pairs_total": 13510800492724224,
+    "causal_attention_pairs_exponent": 16.13,
+    "rope_extrapolation_factor": 64.0,
+    "rope_aliasing": true,
+    "theoretical_verdict": "端到端 8M 不可行：KV cache ≈ 192 GiB，全因果 attention ≈ 10^16.1 对，且 RoPE 需 64× 位置外推。",
+    "why": "红线：融合而非替换 ⇒ teacher attention 一层没删。SGC 的 O(1) 状态不能替 teacher 路径付 KV cache 的钱。"
+  },
+  "C_conditions_for_8M": {
+    "conditions": [
+      "(1) teacher 路径改局部窗/滑窗 W，长程检索交给 SGC 分支（O(1) 状态）",
+      "(2) 或分层路由：浅层 teacher 局部窗、深层 SGC 全局；代价是动了 teacher attention，与『融合不替换』红线冲突",
+      "(3) RoPE 需 NTK/YaRN/位置重标定才能外推到 8M；SimplCore 静态核是平移不变的 Toeplitz，本身不依赖绝对位置"
+    ],
+    "window_kv_table": [
+      {
+        "window_W": 1024,
+        "kv_bytes": 25165824,
+        "kv_MiB": 24.0,
+        "feasible": true
+      },
+      {
+        "window_W": 4096,
+        "kv_bytes": 100663296,
+        "kv_MiB": 96.0,
+        "feasible": true
+      },
+      {
+        "window_W": 8192,
+        "kv_bytes": 201326592,
+        "kv_MiB": 192.0,
+        "feasible": true
+      },
+      {
+        "window_W": 32768,
+        "kv_bytes": 805306368,
+        "kv_MiB": 768.0,
+        "feasible": true
+      },
+      {
+        "window_W": 131072,
+        "kv_bytes": 3221225472,
+        "kv_MiB": 3072.0,
+        "feasible": true
+      }
+    ],
+    "example": "取 W=4096 ⇒ 24 层 KV ≈ 96 MiB，显存可行；但这是新架构，必须重跑 no-regression + L2/L3 配对验证",
+    "not_implemented": true,
+    "theoretical_verdict": "8M 是 SGC 分支的理论性质，不是当前 hybrid 迁移模型的已验证上下文长度。"
+  },
+  "D_measured_boundary": {
+    "n_questions": 6,
+    "non_accidental": true,
+    "beta1_all_finite": true,
+    "beta1_all_ids_in_range": true,
+    "max_new_tokens": 24,
+    "longest_prompt_tokens": 28,
+    "total_tokens_tested": 52,
+    "note": "实测只覆盖短 prompt + 24 token 贪心生成；8M 属于理论推演，不是实测长度。"
+  },
+  "final_answer": "理论上：SimplCore 的静态 Toeplitz + IIR 递推在 8M 下状态仍是 36.28 MiB 常数，输入侧 bit 预算也不随 L 增长，这一层成立且有实测不变量支撑。但当前迁移是 hybrid、保留 teacher 全注意力，端到端 8M 需要 ≈192 GiB KV cache 与 10^16.1 量级 attention 对，不可行。要真正做到 8M 必须动 teacher 路径（滑窗/路由/位置重标定），那是新架构，需要重新验证零回归。今天不声称支持 8M。",
+  "boundaries": [
+    "无 8M 实测（无对应算力/数据/显存）",
+    "不写『原生级 / 能力更强 / SOTA』",
+    "Qwen4-27B 未发布，本轮与其无关"
+  ]
+}

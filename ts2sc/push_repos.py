@@ -1,0 +1,394 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""TS2SC v8.7 · GitHub 仓库新建与全量上传（纯标准库 Git Data API）
+
+硬约束：
+  * 只【新建】Tuan-0.1-TS2SC-1B；对已存在的 kino-koki/TS2SC 只【新增/覆盖指定路径】，
+    tree 用 base_tree 保留全部既有条目 —— 不删除、不清理任何东西。
+  * 所有上传字节先过 token 扫描，命中即中止；token 绝不写进任何文件/仓库内容。
+  * 大文件按 32 MiB 切片（GitHub 单 blob <100 MB），附 sha256 清单 + 重组脚本，
+    不落盘任何分片副本（流式切片，磁盘只剩原来的 216.6 MiB）。
+  * 断点：已创建的 blob sha 记录在 state json，中断重跑不重复上传。
+
+用法： GH_TOKEN=... python push_repos.py
+"""
+from __future__ import annotations
+
+import base64
+import hashlib
+import json
+import os
+import sys
+import time
+import urllib.error
+import urllib.request
+
+TOKEN = os.environ["GH_TOKEN"]
+OWNER = "kino-koki"
+MODEL_REPO = "Tuan-0.1-TS2SC-1B"
+SRC_REPO = "TS2SC"
+API = "https://api.github.com"
+OUT = "/data/workspace/output"
+V8 = "/data/workspace/ts2sc_v8"
+MIG = os.path.join(OUT, "minicpm5_full_migration")
+BRANCH = "main"
+CHUNK = 32 * 1024 * 1024
+STATE = os.path.join(OUT, "push_state.json")
+
+
+def api(path, method="GET", body=None, timeout=180):
+    data = json.dumps(body).encode() if body is not None else None
+    req = urllib.request.Request(
+        API + path, data=data, method=method,
+        headers={"Authorization": "Bearer " + TOKEN,
+                 "Accept": "application/vnd.github+json",
+                 "User-Agent": "TS2SC-v8.7",
+                 "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            raw = r.read()
+            return json.loads(raw) if raw else {}, dict(r.headers)
+    except urllib.error.HTTPError as e:
+        return {"__error__": e.code, "body": e.read().decode()[:400]}, dict(e.headers)
+
+
+def guard(blobs: dict):
+    """上传前扫描：绝不把 token 或任何形似凭据的字符串推上去。"""
+    # 运行时拼接，避免上传器源码自身含该字面量被误判为凭据
+    needles = [TOKEN.encode(), ("gh" + "p_").encode()]
+    for path, b in blobs.items():
+        for nd in needles:
+            if nd in b:
+                raise RuntimeError(f"REFUSE: credential-like bytes in {path}")
+    print(f"[guard] {len(blobs)} files / "
+          f"{sum(len(x) for x in blobs.values())/2**20:.1f} MiB scanned, 0 hits",
+          flush=True)
+
+
+def ensure_repo(name, private=True, desc=""):
+    r, h = api("/user/repos", "POST",
+               dict(name=name, private=private, description=desc,
+                    auto_init=False, has_issues=False, has_wiki=False))
+    if r.get("__error__") == 422:      # already exists
+        r2, _ = api(f"/repos/{OWNER}/{name}")
+        print(f"[repo] exists {r2.get('full_name')} private={r2.get('private')}",
+              flush=True)
+        return r2
+    if "__error__" in r:
+        raise RuntimeError(f"create repo failed: {r}")
+    print(f"[repo] created {r['full_name']} private={r['private']}", flush=True)
+    return r
+
+
+def head(repo):
+    r, _ = api(f"/repos/{OWNER}/{repo}/git/ref/heads/{BRANCH}")
+    if "__error__" in r:
+        return None
+    return r["object"]["sha"]
+
+
+def seed_empty_repo(repo):
+    """新建仓库 Git 对象库为空（POST blobs 会 409）。先落一个初始 commit。"""
+    r, _ = api(f"/repos/{OWNER}/{repo}/contents/README.md", "PUT",
+               dict(message="init: TS2SC upload bootstrap",
+                    content=base64.b64encode(b"# init\n").decode()))
+    h = head(repo)
+    if h:
+        print(f"[seed] {repo} bootstrapped via Contents API", flush=True)
+        return h
+    # fallback: 空 tree -> commit -> ref
+    tr, _ = api(f"/repos/{OWNER}/{repo}/git/trees", "POST", dict(tree=[]))
+    cm, _ = api(f"/repos/{OWNER}/{repo}/git/commits", "POST",
+                dict(message="init", tree=tr["sha"], parents=[]))
+    api(f"/repos/{OWNER}/{repo}/git/refs", "POST",
+        dict(ref=f"refs/heads/{BRANCH}", sha=cm["sha"]))
+    print(f"[seed] {repo} bootstrapped via empty tree", flush=True)
+    return cm["sha"]
+
+
+def commit_tree(repo, sha):
+    r, _ = api(f"/repos/{OWNER}/{repo}/git/commits/{sha}")
+    return r["tree"]["sha"]
+
+
+def blob(repo, content: bytes, state, key):
+    if key in state.get("blobs", {}):
+        return state["blobs"][key]
+    r, h = api(f"/repos/{OWNER}/{repo}/git/blobs", "POST",
+               dict(content=base64.b64encode(content).decode(),
+                    encoding="base64"), timeout=300)
+    if "__error__" in r:
+        raise RuntimeError(f"blob {key} failed: {r}")
+    state.setdefault("blobs", {})[key] = r["sha"]
+    json.dump(state, open(STATE, "w"), indent=2)
+    return r["sha"]
+
+
+def push(repo, files: dict, message: str):
+    """files: path -> bytes. 用 base_tree 保留已有条目。"""
+    guard(files)
+    state = json.load(open(STATE)) if os.path.exists(STATE) else {}
+    state.setdefault("blobs", {})
+    if head(repo) is None:                       # 必须在 POST blobs 之前
+        seed_empty_repo(repo)
+        if head(repo) is None:
+            raise RuntimeError(f"cannot bootstrap {repo}")
+    entries = []
+    for i, (path, b) in enumerate(sorted(files.items()), 1):
+        sha = blob(repo, b, state, f"{repo}|{path}|{hashlib.sha256(b).hexdigest()[:12]}")
+        entries.append(dict(path=path, mode="100644", type="blob", sha=sha))
+        print(f"  [{i:3d}/{len(files)}] {path:62s} {len(b)/2**20:8.2f} MiB",
+              flush=True)
+    parent = head(repo)
+    tree_body = dict(tree=entries)
+    if parent:
+        tree_body["base_tree"] = commit_tree(repo, parent)
+    tr, _ = api(f"/repos/{OWNER}/{repo}/git/trees", "POST", tree_body, timeout=300)
+    if "__error__" in tr:
+        raise RuntimeError(f"tree failed: {tr}")
+    cm_body = dict(message=message, tree=tr["sha"], parents=[] if not parent else [parent])
+    cm, _ = api(f"/repos/{OWNER}/{repo}/git/commits", "POST", cm_body)
+    if "__error__" in cm:
+        raise RuntimeError(f"commit failed: {cm}")
+    if parent:
+        rf, _ = api(f"/repos/{OWNER}/{repo}/git/refs/heads/{BRANCH}", "PATCH",
+                    dict(sha=cm["sha"], force=False))
+    else:
+        rf, _ = api(f"/repos/{OWNER}/{repo}/git/refs", "POST",
+                    dict(ref=f"refs/heads/{BRANCH}", sha=cm["sha"]))
+    if "__error__" in rf:
+        raise RuntimeError(f"ref update failed: {rf}")
+    print(f"[push] {repo} commit {cm['sha'][:10]} : {message}", flush=True)
+    return cm["sha"]
+
+
+def read(p):
+    return open(p, "rb").read() if os.path.exists(p) else None
+
+
+def model_files():
+    """模型仓：权重分片 + 身份 adapter + 账本 + 重组/重放 + 证据。"""
+    f = {}
+    # 1) 216.6 MiB 分支 checkpoint 流式切片，不落盘副本
+    big = os.path.join(MIG, "student_branch_v8.safetensors")
+    if not os.path.exists(big):
+        raise RuntimeError(f"missing {big}")
+    size = os.path.getsize(big)
+    whole = hashlib.sha256()
+    with open(big, "rb") as fh:                 # 流式算总 sha，不整文件驻留
+        while True:
+            b = fh.read(1 << 20)
+            if not b:
+                break
+            whole.update(b)
+    n = (size + CHUNK - 1) // CHUNK
+    chunks_meta = []
+    with open(big, "rb") as fh:                 # 逐片读，峰值只多 32 MiB
+        for i in range(n):
+            fh.seek(i * CHUNK)
+            p = fh.read(CHUNK)
+            chunks_meta.append(dict(name=f"weights/student_branch.part{i:02d}",
+                                    bytes=len(p),
+                                    sha256=hashlib.sha256(p).hexdigest()))
+            f[f"weights/student_branch.part{i:02d}"] = p
+    manifest = dict(source="student_branch_v8.safetensors",
+                    total_bytes=size, sha256=whole.hexdigest(),
+                    chunk_bytes=CHUNK, n_chunks=n, chunks=chunks_meta)
+    f["weights/MANIFEST.json"] = json.dumps(manifest, indent=2,
+                                            ensure_ascii=False).encode()
+    f["weights/reassemble.py"] = REASSEMBLE.encode()
+    # 2) 身份微调权重（本轮新核心资产）
+    for name in ("identity_alignment.npz", "identity_verify.json"):
+        b = read(os.path.join(OUT, name))
+        if b: f[name] = b
+    # 3) 迁移账本 / 配置 / 重放
+    for name, dst in (("student_full_manifest.json", "student_full_manifest.json"),
+                      ("config.json", "config.json"),
+                      ("replay_full.py", "replay_full.py")):
+        b = read(os.path.join(MIG, name))
+        if b: f[dst] = b
+    # 4) 证据
+    for name in ("migration_proof.json", "multi_prompt_verify.json",
+                 "context_8m_theory.json", "student_speaks_verify_v84.json",
+                 "乱码理论修复与v8.4重新迁移报告.md",
+                 "迁移真实性证明与8M理论验证报告.md",
+                 "无词表设计核实与继承缺口报告.md"):
+        b = read(os.path.join(OUT, name))
+        if b: f["evidence/" + name] = b
+    # 5) 模型卡（如实边界）
+    f["README.md"] = MODEL_CARD.encode()
+    f["REASSEMBLE_AND_REPLAY.md"] = REPLAY_DOC.encode()
+    return f
+
+
+def src_files():
+    """TS2SC 源码仓：只放到 ts2sc/ 与 docs/ 前缀，不覆盖/删除已有根条目。"""
+    f = {}
+    for root, dirs, names in os.walk(V8):
+        dirs[:] = [d for d in dirs if d != "__pycache__"]
+        for n in names:
+            if n.endswith((".pyc", ".tmp")) or n.startswith("."):
+                continue
+            p = os.path.join(root, n)
+            rel = os.path.relpath(p, V8).replace(os.sep, "/")
+            b = read(p)
+            if b is not None and len(b) < 4 * 2**20:
+                f["ts2sc/" + rel] = b
+    for name in ("无词表设计核实与继承缺口报告.md",
+                 "迁移真实性证明与8M理论验证报告.md",
+                 "乱码理论修复与v8.4重新迁移报告.md",
+                 "TS2SC_深度重开发方案.md", "TS2SC_系统路线与不变量.md",
+                 "identity_verify.json", "migration_proof.json",
+                 "context_8m_theory.json"):
+        b = read(os.path.join(OUT, name))
+        if b: f["docs/" + name] = b
+    f["docs/IDENTITY_ALIGNMENT.md"] = IDENTITY_DOC.encode()
+    return f
+
+
+REASSEMBLE = '''#!/usr/bin/env python3
+"""重组 weights/student_branch.part* -> student_branch_v8.safetensors 并校验 sha256。"""
+import hashlib, json, os, sys
+H = os.path.dirname(os.path.abspath(__file__))
+m = json.load(open(os.path.join(H, "MANIFEST.json"), encoding="utf-8"))
+out = os.path.join(H, m["source"])
+parts = []
+for c in m["chunks"]:
+    b = open(os.path.join(H, os.path.basename(c["name"])), "rb").read()
+    assert len(b) == c["bytes"], c["name"]
+    assert hashlib.sha256(b).hexdigest() == c["sha256"], c["name"]
+    parts.append(b)
+raw = b"".join(parts)
+assert len(raw) == m["total_bytes"]
+assert hashlib.sha256(raw).hexdigest() == m["sha256"]
+open(out, "wb").write(raw)
+print("OK", out, len(raw), "bytes", hashlib.sha256(raw).hexdigest())
+'''
+
+MODEL_CARD = '''# Tuan-0.1-TS2SC-1B
+
+**青小团系列开源 AI 模型 (Tuan-Models) 的第一款模型** · 六安市青奈科技有限公司
+基于 `kino-koki/MiniCPM5-1B` 真实 BF16 权重、经 TS2SC v8.7 融合迁移与身份认同微调。
+
+## 这个仓库里有什么
+
+| 路径 | 内容 |
+|---|---|
+| `weights/student_branch.part*` | 24 层 SGC 融合分支 checkpoint 的 32 MiB 分片（216.6 MiB / 144 张量） |
+| `weights/MANIFEST.json` | 每片 sha256 + 总 sha256；`reassemble.py` 一键重组并校验 |
+| `identity_alignment.npz` | **身份认同微调权重**（CPU 闭式 rank-1 adapter，12 语言共享方向） |
+| `config.json` / `student_full_manifest.json` | 411 张量账本：219 COPY + 72 DERIVE + 120 NEW，UNCLASSIFIED=0 |
+| `replay_full.py` | 目标机从 teacher 权重流式重放出完整 2.6 GB student，逐位校验每个 COPY |
+| `evidence/` | 迁移真实性证明、12 臂非偶然验证、8M 理论、乱码理论修复、无词表缺口报告 |
+
+## 为什么没有 2.01 GiB 基座 / 2.6 GB 完整 student
+
+- 219 个 `COPY` 张量是 teacher 原样，`student_full_manifest.json` 带每个的 sha256；
+  目标机从 `kino-koki/MiniCPM5-1B`（私有）拉取后由 `replay_full.py` 重组，**不重复分发第三方基座权重**。
+- 完整 2.6 GB student 未在沙盒落盘（磁盘 ~415 MiB），本仓提供的是**可复现的迁移产物 +
+  逐位校验 recipe**，不是伪装成成品的大文件。
+
+## 身份微调（非提示词）
+
+`identity_alignment.npz` 是独立可插拔权重：加载 → 具备身份；卸载 → 回到 β=0 教师态。
+条件门 `g(x)=σ(κ(u·ĥ)−b)` 只在身份问句触发，多语言共享一个隐藏方向 `u`，
+注入 `Δ=λ·g·ε_id·r_x·v̂`（`‖Δ‖≤0.05‖x‖`）。措辞由模型自己组织，**不是每次复读一段模板**。
+详见 `evidence/identity_verify.json` 与 TS2SC 仓 `docs/IDENTITY_ALIGNMENT.md`。
+
+## 诚实边界（一条不松）
+
+- **「上下文长度理论无限」是品牌陈述，不是实测**。当前 hybrid 端到端 8M 不可行
+  （192 GiB KV + 10^16.1 attention 对 + 64× RoPE 外推）；见 `evidence/context_8m_theory.json`。
+- β=1 是**尺度契约配置，不是 L2 校准成品**；无 ppl / KL / hidden cos / 配对 CI / 能力结论。
+- 身份微调是**闭式 rank-1 adapter，不是全量 SFT / 梯度训练**。
+- **29 项特性 = 20 RUNNABLE + 7 REGISTERED + 2 NOT_INHERITED**，不是「完全继承」；
+  无词表 / GlyphStream 实现未推送，见 `evidence/无词表设计核实与继承缺口报告.md`。
+- 工程 hybrid（保留 teacher attention）≠ 论文静态核构造，互不作为对方证据。
+- 未删除/修改任何已有仓库条目；本仓为新建。
+
+上游：`kino-koki/SimplCore` · `kino-koki/TS2SC` · `kino-koki/MiniCPM5-1B`
+'''
+
+REPLAY_DOC = '''# 重组与重放
+
+```bash
+cd weights && python reassemble.py        # 32 MiB 分片 -> 216.6 MiB safetensors，逐片 sha256 校验
+cd .. && python replay_full.py --execute  # 目标机：读真实 teacher 分片，流式写出完整 2.6 GB student
+```
+
+`replay_full.py` 对 219 个 COPY 张量逐个做 shape/dtype/逐位校验，
+对 72 个 DERIVE 复算 GQA 行映射（禁止零填充），对 120 个 NEW 写出 24 层 SGC 分支。
+任何一项不匹配即中止，不产出半成品。
+'''
+
+IDENTITY_DOC = '''# 身份认同微调 · CPU 闭式 rank-1 adapter
+
+不是 system prompt，不是 few-shot，不是每轮拼接模板。产出的是独立权重文件
+`identity_alignment.npz`，属于 TS2SC 微调系统的核心资产。
+
+## 三个真组件
+
+1. **身份方向 `u`**：12 语言身份问句与对照问句各取 pre-lm_head hidden，
+   `u = mean(ĥ_id) − mean(ĥ_non)`。一个方向覆盖所有语言，换语言不露馅。
+2. **条件门 `g(x)=σ(κ(u·ĥ)−b)`**：`b=(min p_id + max p_non)/2`，`κ=4/margin`。
+   身份问句 g→1，算术/翻译/闲聊 g→0 ⇒ 不会每次复述那段话。
+3. **写入方向 `v`**：`v = normalize(Σ_{i∈S} W_lmhead[i,:])`（rank-1 闭式解，
+   只读 |S| 行，不扫 130560 行）。注入 `Δ = λ·g·ε_id·r_x·v̂`，
+   复用 T1′ 无量纲尺度契约 `‖Δ‖≤0.05‖x‖` ⇒ 不溢出。
+
+## 验收
+
+- 12 语言身份问句门控全部高于全部非身份问句
+- 多语言短生成首句互不重复（不是固定模板）
+- 非身份问句不泄漏身份关键词
+- logits 全 finite、0 越界 id、decode gate 全过
+
+## 边界
+
+不改 219 个 teacher 张量；不改 β_l 校准状态；不是梯度 SFT / 全量微调；
+「上下文长度理论无限」是品牌陈述非实测；无能力/ppl/SOTA 声明。
+'''
+
+
+def main():
+    t0 = time.time()
+    target = sys.argv[1].replace("--target=", "") if len(sys.argv) > 1 else "all"
+    u, _ = api("/user")
+    assert u.get("login") == OWNER, u
+    print(f"[auth] {OWNER} scopes=repo | target={target}", flush=True)
+
+    c1, c2, n1, n2, b1, b2 = "SKIPPED", "SKIPPED", 0, 0, 0, 0
+    if target in ("all", "model"):
+        ensure_repo(MODEL_REPO, private=True,
+                    desc="Tuan-Models #1 · TS2SC v8.7 fused 1B model, weights + identity adapter")
+        mf = model_files()
+        n1, b1 = len(mf), sum(len(b) for b in mf.values())
+        print(f"[model] {n1} files, {b1/2**20:.1f} MiB", flush=True)
+        c1 = push(MODEL_REPO, mf,
+                  "Tuan-0.1-TS2SC-1B: 24-layer SGC branch (sharded), 411-tensor "
+                  "manifest, identity rank-1 adapter, evidence bundle")
+    if target in ("all", "src"):
+        sf = src_files()
+        n2, b2 = len(sf), sum(len(b) for b in sf.values())
+        print(f"[src] {n2} files, {b2/2**20:.2f} MiB -> {OWNER}/{SRC_REPO}",
+              flush=True)
+        c2 = push(SRC_REPO, sf,
+                  "TS2SC v8.7: full migration source, CPU identity-alignment "
+                  "fine-tuner (core asset), theory proofs and audit reports")
+
+    rep = dict(date=time.strftime("%Y-%m-%d %H:%M:%S"), owner=OWNER,
+               target=target,
+               model_repo=dict(name=f"{OWNER}/{MODEL_REPO}", private=True,
+                               branch=BRANCH, commit=c1, n_files=n1, bytes=b1),
+               source_repo=dict(name=f"{OWNER}/{SRC_REPO}", branch=BRANCH,
+                                commit=c2, n_files=n2, bytes=b2,
+                                note="base_tree used; NO existing entry deleted"),
+               guard="0 credential-like byte sequences uploaded",
+               elapsed_s=round(time.time() - t0, 1))
+    json.dump(rep, open(os.path.join(OUT, "push_report.json"), "w"),
+              indent=2, ensure_ascii=False)
+    print("\n[done]", json.dumps(rep, ensure_ascii=False, indent=2), flush=True)
+
+
+if __name__ == "__main__":
+    main()

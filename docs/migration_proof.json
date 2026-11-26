@@ -1,0 +1,159 @@
+{
+  "title": "证明：测试用的迁移模型真的被迁移，不是原模型直接跑",
+  "date": "2026-11-26 19:43:35",
+  "question": "β=0 逐位等于原模型，如何排除整个测试都在跑原模型？",
+  "answer": "β=0 是 F13『teacher 全保留』的设计态；判别的不是这一臂，而是 β=1 臂：它多出 192 个原模型不存在的张量，24 层每层前向都被改变，且差异随这些张量的权重变化而变化。",
+  "E1_structural": {
+    "n_teacher_keys": 219,
+    "n_student_keys": 411,
+    "n_copied_verbatim": 219,
+    "n_new_keys": 192,
+    "n_removed_teacher_keys": 0,
+    "added_all_sgc": true,
+    "added_examples": [
+      "model.blocks.0.sgc.Wc",
+      "model.blocks.0.sgc.Wg.weight",
+      "model.blocks.0.sgc.Wk.weight",
+      "model.blocks.0.sgc.Wq.weight"
+    ],
+    "removed_examples": [],
+    "branch_checkpoint": {
+      "path": "/data/workspace/output/minicpm5_full_migration/student_branch_v8.safetensors",
+      "n_tensors": 144,
+      "sample_tensors": [
+        {
+          "tensor": "model.blocks.0.sgc.Wk.weight",
+          "bytes": 4718592,
+          "nonzero_frac": 1.0,
+          "sha256": "6fc36aa8ab8ac733"
+        },
+        {
+          "tensor": "model.blocks.0.sgc.Wv.weight",
+          "bytes": 4718592,
+          "nonzero_frac": 1.0,
+          "sha256": "e9562808e0c114b0"
+        },
+        {
+          "tensor": "model.blocks.0.sgc.Wc",
+          "bytes": 18432,
+          "nonzero_frac": 0.0,
+          "sha256": "f7b586904e367814"
+        },
+        {
+          "tensor": "model.blocks.0.sgc.wgate.weight",
+          "bytes": 6144,
+          "nonzero_frac": 0.0,
+          "sha256": "fd9243e1ba57263e"
+        },
+        {
+          "tensor": "model.blocks.0.sgc.alpha",
+          "bytes": 4,
+          "nonzero_frac": 0.0,
+          "sha256": "df3f619804a92fdb"
+        },
+        {
+          "tensor": "model.blocks.0.sgc.beta",
+          "bytes": 4,
+          "nonzero_frac": 0.0,
+          "sha256": "df3f619804a92fdb"
+        },
+        {
+          "tensor": "model.blocks.1.sgc.Wk.weight",
+          "bytes": 4718592,
+          "nonzero_frac": 1.0,
+          "sha256": "f9a35e1c4bb49c04"
+        },
+        {
+          "tensor": "model.blocks.1.sgc.Wv.weight",
+          "bytes": 4718592,
+          "nonzero_frac": 1.0,
+          "sha256": "1db2b3f22b5b91a4"
+        }
+      ],
+      "derived_Wk_Wv_bytes": {
+        "Wk": 4718592,
+        "Wv": 4718592
+      }
+    },
+    "passed": true,
+    "why": "原模型的 219 个 key 里没有任何 sgc/blocks 张量；迁移产物多出 192 个。若测试只是跑原模型，这 192 个张量不可能存在、更不可能被逐层读进前向。"
+  },
+  "E2_counterfactual": {
+    "n_layers": 24,
+    "a_equals_b_bitwise": true,
+    "per_layer_l2_distance": [
+      0.0,
+      3.39875,
+      4.317459,
+      5.517095,
+      5.204331,
+      7.862154,
+      5.634212,
+      6.772815,
+      7.287436,
+      7.313834,
+      9.740403,
+      9.135222,
+      9.562018,
+      10.536774,
+      10.664216,
+      10.820969,
+      10.643675,
+      10.57514,
+      12.989182,
+      13.30358,
+      14.555235,
+      19.234222,
+      23.977266,
+      26.605791
+    ],
+    "layer0_delta": 0.0,
+    "layer0_unchanged": true,
+    "n_downstream_layers_changed": 23,
+    "all_downstream_layers_changed": true,
+    "min_downstream_delta": 3.39874959,
+    "max_downstream_delta": 26.60579109,
+    "monotone_increasing": true,
+    "passed": true,
+    "why": "cache[l][0] 是第 l 层 attention 的 K，由该层【输入】决定。第 0 层输入是 embedding，尚未经过任何 hook ⇒ delta 必然为 0，这是因果正确性的正面证据而非缺失。第 1..23 层全部改变（且随深度递增），证明 24 层 hook 逐层生效、误差向前传播，不是只改最后一层，更不是原模型直接跑。"
+  },
+  "E3_attribution": {
+    "dist_teacher_to_migrated": 58.144292,
+    "dist_teacher_to_zero_weights": 0.0,
+    "dist_teacher_to_scaled_0p5": 58.144284,
+    "dist_migrated_to_scaled_0p5": 0.000109,
+    "dist_teacher_to_row_permuted": 59.808885,
+    "dist_migrated_to_row_permuted": 74.597566,
+    "dist_teacher_to_random_bits": 0.0,
+    "zero_weights_collapse": true,
+    "row_permuted_not_teacher": true,
+    "row_permuted_clearly_differs_from_real": true,
+    "scale_invariance_finding": "Wk/Wv ×0.5 ⇒ d(migrated, scaled) 仅约 1e-4：dimensionless_gate 的 u=o/(r_o+δ) 把【全局幅度】完全归一化掉，只保留方向。这是 T1' 尺度不变的必然结果，也说明『缩放』不能做权重归因；故主归因改用【行置换】改变方向。此发现已写入报告而非抹平。",
+    "bitwise_random_degenerates_to_zero": true,
+    "bitwise_random_explanation": "纯随机 uint16 位模式含 BF16 NaN/Inf ⇒ k⊗v 变 NaN ⇒ 分支读出全 NaN；dimensionless_gate 的 nan_to_num 把非有限分支吞成 0 ⇒ 等于 teacher。这是 T1' 守卫起作用的观察，不是失败，但同样不能做归因。",
+    "passed": true,
+    "why": "置零 ⇒ 差异完全消失（0.0）；改变行映射（方向）⇒ 输出明显不同，既不等于 teacher 也不等于真实迁移态。所以 β=1 的差异确实由这 192 个迁移新增张量产生，且对权重的【结构/方向】敏感。全局缩放不敏感则是尺度契约的设计性质，已单列说明。"
+  },
+  "E4_integrity": {
+    "n_shards": 22,
+    "total_bytes": 2161290912,
+    "size_match": true,
+    "reassembled_sha256": "7ab8fd86563125929be78aeec8cb3969c7ed2ead3be1ab9d3ec0a9fa69c8660d",
+    "manifest": {
+      "n_tensors": 411,
+      "counts": {
+        "COPY": 219,
+        "DERIVE": 72,
+        "NEW": 120
+      },
+      "unclassified": 0,
+      "branch_checkpoint_tensors": 144
+    },
+    "branch_reopen_sample_ok": true,
+    "passed": true
+  },
+  "all_passed": true,
+  "honest_boundary": "完整 2.6 GB student 仍未在沙盒落盘（磁盘约 415 MiB）。当前迁移实体 = 真实 teacher 权重 + 已落盘 216.6 MiB / 144 张量的 24 层 SGC 分支（运行时挂接），不是静态独立大文件。要变成后者需目标机 replay_full.py。这不等于『原模型直接跑』，但也不等于『成品模型文件已组装』。",
+  "no_capability_claim": "本证明只证结构与因果，不证能力更强 / ppl / 正确性。",
+  "elapsed_s": 354.1
+}

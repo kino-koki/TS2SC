@@ -1,0 +1,157 @@
+{
+  "title": "TS2SC v8.1 · Qwen4-27B T-minus preflight",
+  "date": "2026-11-25",
+  "part_A_real_source_audit": {
+    "audit_target": "/data/workspace/simplcore_src/Simpl-Cloud/SimplCore_架构源码/02_1.7B生产链路_V7",
+    "n_findings": 10,
+    "n_present": 10,
+    "findings": [
+      {
+        "id": "R1",
+        "title": "lm_head 被丢弃 / tied 被强制",
+        "present_in_v7": true,
+        "evidence": "migrate_qwen3.py 只 put embed_tokens.weight；cfg 强制 tie=True；Qwen3-1.7B 实为 untied",
+        "v8_fix": "spec.student_config() 继承 tie；provenance 要求 untied 时显式 COPY lm_head.weight"
+      },
+      {
+        "id": "R2",
+        "title": "tokenizer 复制是 best-effort",
+        "present_in_v7": true,
+        "evidence": "migrate_qwen3.py L171-175：缺文件静默跳过，无断言；历史 tokenizer.json 是 133B LFS 指针",
+        "v8_fix": "contract.static_contract 六文件逐个 REQUIRED + LFS 指针检测 + FAIL 即拒发"
+      },
+      {
+        "id": "R3",
+        "title": "自造词表子集 BPE 与 embedding 不对齐",
+        "present_in_v7": true,
+        "evidence": "bpe.py QwenBPESubset 取 2048/1024 前缀 + 自造 <unk>；decode 的 except 直接返回 B2U 字符串",
+        "v8_fix": "禁用子集 tokenizer；runtime_contract 要求 len(tokenizer)==embed.rows 与 5 条往返"
+      },
+      {
+        "id": "R4",
+        "title": "验收只测『非退化』，不测语义等价",
+        "present_in_v7": true,
+        "evidence": "verify_arch.py gen_quality 仅 n/max_run/rep3/distinct1；拉丁扩展乱码 distinct 高、rep3 低 → PASS",
+        "v8_fix": "align_accept L0-L4；mojibake_rate + 配对 teacher 对照 + Wilson CI"
+      },
+      {
+        "id": "R5",
+        "title": "NEW 参数零初始化使 mixer 近乎失效",
+        "present_in_v7": true,
+        "evidence": "alpha=-2 → sigmoid=0.119；Wc/Wg/wgate=0；mixer 贡献约 0.06×ys，注意力能力被结构性压掉",
+        "v8_fix": "alpha 必须经 align_accept 校准；L2 要求 attention-path 贡献非零且已标定"
+      },
+      {
+        "id": "R6",
+        "title": "GQA 零填充导致一半 slot 恒零",
+        "present_in_v7": true,
+        "evidence": "k/v_proj 从 (d/2,d) 补零到 (d,d)，R=2 切两 slot，slot1 的 K/V 恒 0",
+        "v8_fix": "spec 由 num_key_value_heads*head_dim 推导 slot；provenance 禁止 zero padding"
+      },
+      {
+        "id": "R7",
+        "title": "Qwen3 形状硬编码，Qwen4 必失效",
+        "present_in_v7": true,
+        "evidence": "bos/eos/max_position/R=2 全写死；Qwen4-27B 无 config、可能 QSA/MoE/1M ctx",
+        "v8_fix": "TeacherSpec 零硬编码，缺字段即 T0 blocker；MOE_DETECTED 需声明 per-expert 映射"
+      },
+      {
+        "id": "R8",
+        "title": "q_norm/k_norm 被 SKIP 且无功能对应",
+        "present_in_v7": true,
+        "evidence": "migrate_qwen3.py L134-139 直接 SKIP Qwen3 per-head QK-norm",
+        "v8_fix": "provenance 改 DERIVE FOLD_INTO_WqWk，并声明变换"
+      },
+      {
+        "id": "R9",
+        "title": "函数等价从未验证，只验了逐位复制",
+        "present_in_v7": true,
+        "evidence": "migrate 的断言只有 keys_differ/no_self_attn/copy_bit_identical；无 teacher forward、无 KL、无 ppl",
+        "v8_fix": "align_accept L2：逐层 hidden cos / logit KL / top-1 一致率 / same-condition teacher 对照"
+      },
+      {
+        "id": "R10",
+        "title": "历史失败已被登记但未闭环",
+        "present_in_v7": true,
+        "evidence": "VL47_PREFLIGHT 记 rep3 0.8125 / 0.9286、『中国的首都是→城市，有，北京，北京…』；PAPER_TS2SC_ADDENDUM W14 记 RoPE/mask/embedding-lm_head 四处缺陷",
+        "v8_fix": "v8 把 W14 的四处缺陷逐条做成 L0/L1 硬门禁，而不是留在撤回登记里"
+      }
+    ],
+    "note": "REAL SOURCE AUDIT: all hits are literal string matches in the local V7 files"
+  },
+  "part_B_selftest_fixture": {
+    "note": "SELF-TEST FIXTURE: synthetic 65-token teacher, NOT Qwen4-27B data",
+    "spec": {
+      "n_slots": 2,
+      "tie_inherited": false,
+      "blockers": []
+    },
+    "static_contract_pass": true,
+    "static_contract_failures": [],
+    "negative_controls": {
+      "lfs_pointer": true,
+      "missing_file": true,
+      "vocab_mismatch": true
+    },
+    "negative_controls_all_caught": true,
+    "provenance": {
+      "n_teacher": 25,
+      "counts": {
+        "COPY": 13,
+        "DERIVE": 12,
+        "NEW": 9
+      },
+      "unclassified": 0,
+      "passed": true,
+      "lm_head_recorded": true,
+      "qknorm_folded": true
+    },
+    "mojibake_gate": {
+      "old_gen_quality_would_pass": true,
+      "v8_passed": false,
+      "avg_mojibake_rate": 0.25,
+      "ci95": [
+        0.8389,
+        1.0
+      ]
+    }
+  },
+  "part_C_fusion_invariants": {
+    "passed": true,
+    "failures": [],
+    "checks": {
+      "no_zero_padding": true,
+      "slot_coverage": true,
+      "qknorm_folded_not_skipped": true,
+      "disabled_bit_identical": true,
+      "enabled_beta0_identical": true,
+      "enabled_beta_nonzero_differs": true,
+      "lm_head_tied_plan": true,
+      "lm_head_untied_plan": true,
+      "beta_init_is_zero": true,
+      "calibration_required": true,
+      "no_alpha_minus2": true,
+      "hybrid_not_replacement": true
+    },
+    "note": "pure-function fixture; NOT a torch forward, NOT Qwen4 data",
+    "engineering_paper_boundary": "v8 fusion keeps teacher attention (hybrid); the ICML manuscript characterises a static-kernel no-softmax construction. Neither validates the other."
+  },
+  "qwen4_27b_status": {
+    "model": "Qwen4-27B",
+    "status": "ANNOUNCED_NOT_RELEASED",
+    "announced": "2026-09-22 (云栖大会, 开放权重档)",
+    "released_members": "Qwen4-Max 2026-11-16 (2.4T MoE / 71B active / QSA / 1M ctx)",
+    "open_weights_smaller": "官方称『短期内发布』，无日期、无模型卡、无权重、无 config、无 tokenizer、无许可证",
+    "context_hint_only": "Qwen Code PR #15762 给 qwen4* 标识 1M token 回退值；是线索不是规格"
+  },
+  "t0_blockers": [
+    "real config.json (0 hardcoded fields may be guessed)",
+    "real tokenizer.json + 5 companion files, none LFS pointers",
+    "safetensors index with full tensor key list (COPY/DERIVE/NEW coverage = 100%)",
+    "declared tie_word_embeddings and lm_head key presence",
+    "declared attention layout (QSA / MoE / GQA) and per-expert mapping if MoE",
+    "teacher forward on the same machine for L2/L3 paired control",
+    "serving-path check: HF/vLLM native decode, no custom BPE shim"
+  ],
+  "honest_bound": "No Qwen4-27B weights, config or tokenizer were accessed. Nothing here is a migration result, a perplexity number, a capability claim or a release-date claim."
+}
