@@ -460,8 +460,9 @@ def main():
         print(f"[src] {n2} files, {b2/2**20:.2f} MiB -> {OWNER}/{SRC_REPO}",
               flush=True)
         c2 = push(SRC_REPO, sf,
-                  "TS2SC v8.7: full migration source, CPU identity-alignment "
-                  "fine-tuner (core asset), theory proofs and audit reports")
+                  "TS2SC v9.0 Apache-2.0 release: full migration source, "
+                  "CPU identity-alignment + closed-form ridge SFT (core assets), "
+                  "A2.0 vs Apache-2.0 clarification, theory proofs and audits")
 
     rep = dict(date=time.strftime("%Y-%m-%d %H:%M:%S"), owner=OWNER,
                target=target,
