@@ -1,0 +1,155 @@
+[
+  {
+    "round": 0,
+    "train_stats": [
+      {
+        "k": 1,
+        "n_train_rows": 8,
+        "train_argmax_acc": 1.0,
+        "A_norm": 1.2936
+      },
+      {
+        "k": 2,
+        "n_train_rows": 8,
+        "train_argmax_acc": 1.0,
+        "A_norm": 1.3761
+      },
+      {
+        "k": 3,
+        "n_train_rows": 8,
+        "train_argmax_acc": 1.0,
+        "A_norm": 1.3662
+      },
+      {
+        "k": 4,
+        "n_train_rows": 8,
+        "train_argmax_acc": 1.0,
+        "A_norm": 1.352
+      },
+      {
+        "k": 5,
+        "n_train_rows": 8,
+        "train_argmax_acc": 1.0,
+        "A_norm": 1.3759
+      },
+      {
+        "k": 6,
+        "n_train_rows": 8,
+        "train_argmax_acc": 1.0,
+        "A_norm": 1.3099
+      }
+    ],
+    "sources": [
+      {
+        "source": "teacher_forced",
+        "n_samples": 8
+      }
+    ]
+  },
+  {
+    "round": 1,
+    "train_stats": [
+      {
+        "k": 1,
+        "n_train_rows": 16,
+        "train_argmax_acc": 1.0,
+        "A_norm": 1.841
+      },
+      {
+        "k": 2,
+        "n_train_rows": 16,
+        "train_argmax_acc": 1.0,
+        "A_norm": 1.7615
+      },
+      {
+        "k": 3,
+        "n_train_rows": 16,
+        "train_argmax_acc": 1.0,
+        "A_norm": 1.858
+      },
+      {
+        "k": 4,
+        "n_train_rows": 16,
+        "train_argmax_acc": 1.0,
+        "A_norm": 1.8703
+      },
+      {
+        "k": 5,
+        "n_train_rows": 16,
+        "train_argmax_acc": 1.0,
+        "A_norm": 1.9442
+      },
+      {
+        "k": 6,
+        "n_train_rows": 16,
+        "train_argmax_acc": 1.0,
+        "A_norm": 1.8826
+      }
+    ],
+    "sources": [
+      {
+        "source": "teacher_forced",
+        "n_samples": 8
+      },
+      {
+        "source": "dagger_r1",
+        "n_samples": 8
+      }
+    ]
+  },
+  {
+    "round": 2,
+    "train_stats": [
+      {
+        "k": 1,
+        "n_train_rows": 24,
+        "train_argmax_acc": 1.0,
+        "A_norm": 2.1759
+      },
+      {
+        "k": 2,
+        "n_train_rows": 24,
+        "train_argmax_acc": 1.0,
+        "A_norm": 1.9504
+      },
+      {
+        "k": 3,
+        "n_train_rows": 24,
+        "train_argmax_acc": 1.0,
+        "A_norm": 2.16
+      },
+      {
+        "k": 4,
+        "n_train_rows": 24,
+        "train_argmax_acc": 1.0,
+        "A_norm": 2.195
+      },
+      {
+        "k": 5,
+        "n_train_rows": 24,
+        "train_argmax_acc": 1.0,
+        "A_norm": 2.3056
+      },
+      {
+        "k": 6,
+        "n_train_rows": 24,
+        "train_argmax_acc": 1.0,
+        "A_norm": 2.244
+      }
+    ],
+    "sources": [
+      {
+        "source": "teacher_forced",
+        "n_samples": 8
+      },
+      {
+        "source": "dagger_r1",
+        "n_samples": 8
+      },
+      {
+        "source": "dagger_r2",
+        "n_samples": 8
+      }
+    ]
+  }
+]

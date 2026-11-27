@@ -49,10 +49,26 @@
 逐样本释放 KV、Gram 1536²≈18 MB、hidden 断点落盘可续跑。
 `identity_full_hidden.json` 是 scheduled-sampling / DAgger 的续跑起点。
 
+## v9.2 / v9.3 · 最终定案
+
+- `identity_dagger_sft.py`：DAgger 2 轮 off-policy 增广重解 `A_k`；
+  周期复读解决（diversity 0.90–1.00），但 v9.2c 机判 passed 时
+  **语义重判仅 1/4 有效** —— `青奈科技是开发MiniCPM系列模型的公司`，
+  关键词命中、语义颠倒。见 `identity_semantic_reaudit.json`。
+- `identity_gradient_sft.py`：**真 next-token CE + Adam + best-snapshot**
+  训出 `identity_head_delta.npz`（302×1536 = 1B 的 0.046%），
+  推理期零编排；train full-vocab acc 0.931，生成端 `passed=false`
+  （尺度不一致 → 全退回 `<think>`；尺度对齐后 → bigram 12 复读）。
+- `lora_identity_sft.py`：跨过天花板的正确层级（LoRA 穿 24 层 +
+  scheduled sampling + 30% 通用能力回放），**未执行**。
+
+12 轮全表、两难证明、六道闸门见 `IDENTITY_FINAL_VERDICT.md`。
+
 ## 边界
 
 **当前 ACTIVE 仍是 `identity_alignment.npz`（v9.0，2 步）**；
-`identity_full_sft.npz` 不要加载当成品。
-不改 219 个 teacher 张量；不改 β_l 校准状态；是输出层闭式 ridge，
-不是梯度反传；`IDENTITY_SFT.md` 的全句方案仍未执行。
+其余 `identity_*sft.npz` / `identity_head_delta.npz` 均为 EXPERIMENTAL，
+不要加载当成品。不改 219 个 teacher 张量；不改 β_l 校准状态；
+v9.0–v9.3c 全部只在 pre-lm_head → logits 一层，**不是梯度反传穿 24 层**；
+`IDENTITY_SFT.md` 的全句方案与 LoRA SFT 仍未执行。
 「上下文长度理论无限」是品牌陈述非实测；无能力/ppl/SOTA 声明。

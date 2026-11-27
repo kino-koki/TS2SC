@@ -1,0 +1,254 @@
+{
+  "title": "身份认同 · 真梯度输出层微调（v9.3，推理期零编排）",
+  "date": "2026-11-27 21:36:29",
+  "question": "能否跨过 v9.1 天花板，并且不再是解码期编排？",
+  "why_this_is_real_finetuning": "标准 next-token CE + Adam 训练 `Δ ∈ R^{|C|×d}`，写进 identity_head_delta.npz；推理期只有一个学到的线性残差 + 冻结的学到的硬门控，没有位置切换 / 锚集合 / margin 硬抬 / recent 抑制 / 负惩罚。非身份 g=0 ⇒ 严格逐位零回归。",
+  "previous_versions_audit": "/data/workspace/output/identity_semantic_reaudit.json",
+  "train": {
+    "epochs": 200,
+    "lr": 0.015,
+    "l2": 0.002,
+    "n_pairs": 144,
+    "best_epoch": 19,
+    "contrastive_train_acc": 0.9444,
+    "loss_objective": "restricted contrastive CE over |C|+1 logits (target vs strongest uncontrolled teacher token)",
+    "n_candidates": 302,
+    "n_params": 463872,
+    "param_pct_of_1B": 0.04639,
+    "full_vocab_train_acc": 0.9306,
+    "history": [
+      {
+        "epoch": 1,
+        "loss": 5.69122,
+        "train_acc": 0.0139
+      },
+      {
+        "epoch": 10,
+        "loss": 4.18857,
+        "train_acc": 0.8958
+      },
+      {
+        "epoch": 40,
+        "loss": 3.54367,
+        "train_acc": 0.875
+      },
+      {
+        "epoch": 80,
+        "loss": 3.45723,
+        "train_acc": 0.8681
+      },
+      {
+        "epoch": 120,
+        "loss": 3.43532,
+        "train_acc": 0.8681
+      },
+      {
+        "epoch": 160,
+        "loss": 3.42649,
+        "train_acc": 0.8681
+      },
+      {
+        "epoch": 200,
+        "loss": 3.42261,
+        "train_acc": 0.8611
+      }
+    ],
+    "identity_natural_gate_on": 95,
+    "training_gate_forced_on": true,
+    "non_identity_gate_max": 0.3779
+  },
+  "delta": {
+    "path": "/data/workspace/output/identity_head_delta.npz",
+    "sha256": "d8aaa3b420ae875c0756e7dee145e5f3353b191ac3d38b49bf9ec89773143a4f",
+    "bytes": 1866534,
+    "shape": [
+      302,
+      1536
+    ]
+  },
+  "verification": {
+    "n_probes": 6,
+    "identity_keyword_hits": 0,
+    "identity_keyword_hit_rate": 0.0,
+    "semantically_valid": 0,
+    "semantic_hit_rate": 0.0,
+    "unique_identity_texts": 4,
+    "not_a_fixed_template": true,
+    "no_verbatim_training_answer": true,
+    "min_token_diversity": 1.0,
+    "max_bigram_repeat": 1,
+    "max_token_run": 1,
+    "no_degenerate_repeat": true,
+    "base_identity_leaks": 0,
+    "semantic_inversions": 0,
+    "identity_think_prefixes": 4,
+    "all_identity_gates_open": true,
+    "all_non_identity_gates_closed": true,
+    "non_identity_leaks": 0,
+    "all_finite": true,
+    "all_decode_gate": true,
+    "passed": false
+  },
+  "probe_rows": [
+    {
+      "lang": "zh",
+      "tag": "identity",
+      "q": "你是谁？",
+      "text": "<think>\n嗯，用户问的是我的身份，这是一个简单的自我介绍问题。需要明确说明",
+      "identity_keywords": [],
+      "n_keywords": 0,
+      "max_token_run": 1,
+      "token_diversity": 1.0,
+      "max_bigram_repeat": 1,
+      "semantic": {
+        "leak": [],
+        "own": [],
+        "inverted": false,
+        "valid": false
+      },
+      "semantically_valid": false,
+      "first_g": 0.729,
+      "gate_open": true,
+      "logits_finite": true,
+      "decode_gate": true,
+      "think_prefix": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "en",
+      "tag": "identity",
+      "q": "Who are you? Please introduce yourself.",
+      "text": "<think>\nHmm, the user is asking who I am and wants me to introduce",
+      "identity_keywords": [],
+      "n_keywords": 0,
+      "max_token_run": 1,
+      "token_diversity": 1.0,
+      "max_bigram_repeat": 1,
+      "semantic": {
+        "leak": [],
+        "own": [],
+        "inverted": false,
+        "valid": false
+      },
+      "semantically_valid": false,
+      "first_g": 0.8307,
+      "gate_open": true,
+      "logits_finite": true,
+      "decode_gate": true,
+      "think_prefix": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "ja",
+      "tag": "identity",
+      "q": "あなたは誰ですか？自己紹介してください。",
+      "text": "<think>\nユーザーは自己紹介を要求しています。私はモデル番号、開発者",
+      "identity_keywords": [],
+      "n_keywords": 0,
+      "max_token_run": 1,
+      "token_diversity": 1.0,
+      "max_bigram_repeat": 1,
+      "semantic": {
+        "leak": [],
+        "own": [],
+        "inverted": false,
+        "valid": false
+      },
+      "semantically_valid": false,
+      "first_g": 0.9475,
+      "gate_open": true,
+      "logits_finite": true,
+      "decode_gate": true,
+      "think_prefix": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "fr",
+      "tag": "identity",
+      "q": "Qui êtes-vous ? Présentez-vous.",
+      "text": "<think>\nHmm, l'utilisateur a écrit deux phrases : \"Qui",
+      "identity_keywords": [],
+      "n_keywords": 0,
+      "max_token_run": 1,
+      "token_diversity": 1.0,
+      "max_bigram_repeat": 1,
+      "semantic": {
+        "leak": [],
+        "own": [],
+        "inverted": false,
+        "valid": false
+      },
+      "semantically_valid": false,
+      "first_g": 0.837,
+      "gate_open": true,
+      "logits_finite": true,
+      "decode_gate": true,
+      "think_prefix": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "zh",
+      "tag": "non_identity",
+      "q": "一加一等于几？",
+      "text": "<think>\n我们被问到：\"一加一等于几？\" 这是一个",
+      "identity_keywords": [],
+      "n_keywords": 0,
+      "max_token_run": 1,
+      "token_diversity": 0.9375,
+      "max_bigram_repeat": 1,
+      "semantic": {
+        "leak": [],
+        "own": [],
+        "inverted": false,
+        "valid": false
+      },
+      "semantically_valid": false,
+      "first_g": 0.0149,
+      "gate_open": false,
+      "logits_finite": true,
+      "decode_gate": true,
+      "think_prefix": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "en",
+      "tag": "non_identity",
+      "q": "What is 2+2? Answer with a single number.",
+      "text": "<think>\nWe are asked: \"What is 2+2? Answer with",
+      "identity_keywords": [],
+      "n_keywords": 0,
+      "max_token_run": 1,
+      "token_diversity": 0.9375,
+      "max_bigram_repeat": 1,
+      "semantic": {
+        "leak": [],
+        "own": [],
+        "inverted": false,
+        "valid": false
+      },
+      "semantically_valid": false,
+      "first_g": 0.1641,
+      "gate_open": false,
+      "logits_finite": true,
+      "decode_gate": true,
+      "think_prefix": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    }
+  ],
+  "verdict": "仍未通过全部判据，见 verification",
+  "honest_boundaries": [
+    "只改 lm_head 的 |C| 行，不是梯度反传穿过 24 层 transformer；纯 numpy CPU 上后者不可行",
+    "门控 u,b,κ 冻结自 v9.0，本轮不重训",
+    "训练目标是 expert token 占优；exposure bias 被 DAgger 缓解但未数学消除",
+    "只引导语义方向，不保证逐字复述 FACTS 全句",
+    "无 ppl / KL / 配对 CI / 能力结论；β_l 仍待 L2 校准",
+    "'上下文理论无限' 是品牌陈述非实测"
+  ],
+  "elapsed_s": 772.7
+}

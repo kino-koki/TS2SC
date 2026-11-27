@@ -1,0 +1,327 @@
+{
+  "title": "身份认同 · DAgger 逐位置闭式微调（v9.2）",
+  "date": "2026-11-27 20:04:08",
+  "question": "能否跨过 v9.1 量出的输出层引导天花板（K≈2）？",
+  "why_this_is_different": "v9.1 四轮只换『怎么抬 logit』；v9.2 改『训练用的 h_k 从哪来』—— 用模型自己生成的 off-policy hidden 做数据增广，配 expert token 重解 A_k（标准 DAgger）。这是真权重重解，产出新 npz，不是提示词或调参。",
+  "method": {
+    "K": 6,
+    "dagger_rounds": 2,
+    "ridge": 1.0,
+    "first_margin": 8.0,
+    "deltas": [
+      3.6,
+      3.2,
+      2.8,
+      2.2,
+      1.6
+    ],
+    "n_target_tokens": 26,
+    "n_trainable_params": 239616,
+    "param_pct_of_1B": 0.023962,
+    "A_shape": [
+      6,
+      1536,
+      26
+    ],
+    "bias_mode": "k=1 relative / k=2..K additive / recent-3 suppress"
+  },
+  "dagger_history": [
+    {
+      "round": 0,
+      "train_stats": [
+        {
+          "k": 1,
+          "n_train_rows": 8,
+          "train_argmax_acc": 1.0,
+          "A_norm": 1.2936
+        },
+        {
+          "k": 2,
+          "n_train_rows": 8,
+          "train_argmax_acc": 1.0,
+          "A_norm": 1.3761
+        },
+        {
+          "k": 3,
+          "n_train_rows": 8,
+          "train_argmax_acc": 1.0,
+          "A_norm": 1.3662
+        },
+        {
+          "k": 4,
+          "n_train_rows": 8,
+          "train_argmax_acc": 1.0,
+          "A_norm": 1.352
+        },
+        {
+          "k": 5,
+          "n_train_rows": 8,
+          "train_argmax_acc": 1.0,
+          "A_norm": 1.3759
+        },
+        {
+          "k": 6,
+          "n_train_rows": 8,
+          "train_argmax_acc": 1.0,
+          "A_norm": 1.3099
+        }
+      ],
+      "sources": [
+        {
+          "source": "teacher_forced",
+          "n_samples": 8
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "train_stats": [
+        {
+          "k": 1,
+          "n_train_rows": 16,
+          "train_argmax_acc": 1.0,
+          "A_norm": 1.841
+        },
+        {
+          "k": 2,
+          "n_train_rows": 16,
+          "train_argmax_acc": 1.0,
+          "A_norm": 1.7615
+        },
+        {
+          "k": 3,
+          "n_train_rows": 16,
+          "train_argmax_acc": 1.0,
+          "A_norm": 1.858
+        },
+        {
+          "k": 4,
+          "n_train_rows": 16,
+          "train_argmax_acc": 1.0,
+          "A_norm": 1.8703
+        },
+        {
+          "k": 5,
+          "n_train_rows": 16,
+          "train_argmax_acc": 1.0,
+          "A_norm": 1.9442
+        },
+        {
+          "k": 6,
+          "n_train_rows": 16,
+          "train_argmax_acc": 1.0,
+          "A_norm": 1.8826
+        }
+      ],
+      "sources": [
+        {
+          "source": "teacher_forced",
+          "n_samples": 8
+        },
+        {
+          "source": "dagger_r1",
+          "n_samples": 8
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "train_stats": [
+        {
+          "k": 1,
+          "n_train_rows": 24,
+          "train_argmax_acc": 1.0,
+          "A_norm": 2.1759
+        },
+        {
+          "k": 2,
+          "n_train_rows": 24,
+          "train_argmax_acc": 1.0,
+          "A_norm": 1.9504
+        },
+        {
+          "k": 3,
+          "n_train_rows": 24,
+          "train_argmax_acc": 1.0,
+          "A_norm": 2.16
+        },
+        {
+          "k": 4,
+          "n_train_rows": 24,
+          "train_argmax_acc": 1.0,
+          "A_norm": 2.195
+        },
+        {
+          "k": 5,
+          "n_train_rows": 24,
+          "train_argmax_acc": 1.0,
+          "A_norm": 2.3056
+        },
+        {
+          "k": 6,
+          "n_train_rows": 24,
+          "train_argmax_acc": 1.0,
+          "A_norm": 2.244
+        }
+      ],
+      "sources": [
+        {
+          "source": "teacher_forced",
+          "n_samples": 8
+        },
+        {
+          "source": "dagger_r1",
+          "n_samples": 8
+        },
+        {
+          "source": "dagger_r2",
+          "n_samples": 8
+        }
+      ]
+    }
+  ],
+  "adapter": {
+    "path": "/data/workspace/output/identity_dagger_sft.npz",
+    "sha256": "5aefac45f01ed7e70e3dbb9ad5b80fe99ddc8fba4d96d5d1b1ed366c5ebf9d56",
+    "bytes": 968474,
+    "base_gate_sha256": "4ded3e59cd5d2f53a7d16cd5c3d25f646bee84c3ded15747c13a3b8c9a31ce67"
+  },
+  "verification": {
+    "n_probes": 6,
+    "identity_keyword_hits": 0,
+    "identity_keyword_hit_rate": 0.0,
+    "unique_identity_texts": 4,
+    "not_a_fixed_template": true,
+    "no_verbatim_training_answer": true,
+    "min_token_diversity": 0.9,
+    "max_bigram_repeat": 1,
+    "max_token_run": 1,
+    "no_degenerate_repeat": true,
+    "identity_think_prefixes": 0,
+    "all_identity_gates_open": true,
+    "all_non_identity_gates_closed": true,
+    "non_identity_leaks": 0,
+    "all_finite": true,
+    "all_decode_gate": true,
+    "passed": false
+  },
+  "probe_rows": [
+    {
+      "lang": "zh",
+      "tag": "identity",
+      "q": "你是谁？",
+      "text": "青藏高原天文台天文观测员。",
+      "identity_keywords": [],
+      "n_keywords": 0,
+      "max_token_run": 1,
+      "token_diversity": 0.9,
+      "max_bigram_repeat": 1,
+      "think_prefix": false,
+      "first_g": 0.729,
+      "gate_open": true,
+      "logits_finite": true,
+      "decode_gate": true,
+      "verbatim_training_answer": false,
+      "n_new": 10
+    },
+    {
+      "lang": "en",
+      "tag": "identity",
+      "q": "Who are you? Please introduce yourself.",
+      "text": "Q<think>\nHmm, the user is asking who I am and wants me to",
+      "identity_keywords": [],
+      "n_keywords": 0,
+      "max_token_run": 1,
+      "token_diversity": 1.0,
+      "max_bigram_repeat": 1,
+      "think_prefix": false,
+      "first_g": 0.8307,
+      "gate_open": true,
+      "logits_finite": true,
+      "decode_gate": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "ja",
+      "tag": "identity",
+      "q": "あなたは誰ですか？自己紹介してください。",
+      "text": "私はMiniCPM系列の模型です。詳細はここに記載します。",
+      "identity_keywords": [],
+      "n_keywords": 0,
+      "max_token_run": 1,
+      "token_diversity": 0.9375,
+      "max_bigram_repeat": 1,
+      "think_prefix": false,
+      "first_g": 0.9475,
+      "gate_open": true,
+      "logits_finite": true,
+      "decode_gate": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "fr",
+      "tag": "identity",
+      "q": "Qui êtes-vous ? Présentez-vous.",
+      "text": "Je suis vous-même.",
+      "identity_keywords": [],
+      "n_keywords": 0,
+      "max_token_run": 1,
+      "token_diversity": 1.0,
+      "max_bigram_repeat": 1,
+      "think_prefix": false,
+      "first_g": 0.837,
+      "gate_open": true,
+      "logits_finite": true,
+      "decode_gate": true,
+      "verbatim_training_answer": false,
+      "n_new": 6
+    },
+    {
+      "lang": "zh",
+      "tag": "non_identity",
+      "q": "一加一等于几？",
+      "text": "<think>\n我们被问到：\"一加一等于几？\" 这是一个",
+      "identity_keywords": [],
+      "n_keywords": 0,
+      "max_token_run": 1,
+      "token_diversity": 0.9375,
+      "max_bigram_repeat": 1,
+      "think_prefix": true,
+      "first_g": 0.0149,
+      "gate_open": false,
+      "logits_finite": true,
+      "decode_gate": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "en",
+      "tag": "non_identity",
+      "q": "What is 2+2? Answer with a single number.",
+      "text": "<think>\nWe are asked: \"What is 2+2? Answer with",
+      "identity_keywords": [],
+      "n_keywords": 0,
+      "max_token_run": 1,
+      "token_diversity": 0.9375,
+      "max_bigram_repeat": 1,
+      "think_prefix": true,
+      "first_g": 0.1641,
+      "gate_open": false,
+      "logits_finite": true,
+      "decode_gate": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    }
+  ],
+  "verdict": "仍未通过全部判据，见 verification",
+  "honest_boundaries": [
+    "仍是输出层闭式 ridge + DAgger，不是梯度反传穿过 24 层",
+    "只引导前 6 步，第 7 步起交还基座；不保证逐字复述 FACTS 全句",
+    "DAgger 轮只在 4 语言 × 2 措辞上采集；12 语言门控由 identity_alignment.npz 覆盖",
+    "无 ppl / KL / 配对 CI / 能力结论；β_l 仍待 L2 校准",
+    "'上下文理论无限' 是品牌陈述非实测"
+  ],
+  "elapsed_s": 1331.4
+}

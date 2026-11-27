@@ -406,9 +406,16 @@ class TeacherLM:
             m = float(all_lg[np.isfinite(all_lg)].max()) if finite_all else \
                 float(np.nanmax(all_lg))
             for tid, w in bias.items():
-                if 0 <= int(tid) < self.vocab and w > 0:
-                    all_lg[int(tid)] = max(float(all_lg[int(tid)]),
-                                           m + float(relative_margin) * float(w))
+                t = int(tid)
+                if not (0 <= t < self.vocab):
+                    continue
+                if w > 0:
+                    all_lg[t] = max(float(all_lg[t]),
+                                    m + float(relative_margin) * float(w))
+                elif w < 0:
+                    # v9.2c 负向抑制：压掉基座身份词（MiniCPM / 面壁智能 /
+                    # ModelBest / OpenBMB …），不改其它 logit。
+                    all_lg[t] += float(w)
         elif bias:
             # v9.1 additive：只做加法，teacher 原始 logit 仍参与竞争，
             # 身份 token 被「推一把」而不是「钉死」⇒ 不会锁成复读机。

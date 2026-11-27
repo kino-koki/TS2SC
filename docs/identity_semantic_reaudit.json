@@ -1,0 +1,187 @@
+{
+  "dagger": {
+    "machine_passed": true,
+    "keyword_hit_rate": 0.75,
+    "semantic_valid": 1,
+    "semantic_pass": false,
+    "texts": [
+      "青奈科技是开发MiniCPM系列模型的公司。我是一个MiniCPM",
+      "Qingnai 是一个由清华大学和北京大学共同支持的学术研究机构。",
+      "私は六安のリモートワークプラットフォーム上で動作しています。",
+      "Je suis."
+    ],
+    "leaks": [
+      [
+        "MiniCPM"
+      ],
+      [
+        "清华",
+        "学术研究机构",
+        "研究机构"
+      ],
+      [],
+      []
+    ],
+    "inversions": [
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "dagger_verify_v92a": {
+    "machine_passed": false,
+    "keyword_hit_rate": 0.0,
+    "semantic_valid": 0,
+    "semantic_pass": false,
+    "texts": [
+      "青藏高原天文台天文观测员。",
+      "Q<think>\nHmm, the user is asking who I am and wants me to",
+      "私はMiniCPM系列の模型です。詳細はここに記載します。",
+      "Je suis vous-même."
+    ],
+    "leaks": [
+      [],
+      [],
+      [
+        "MiniCPM"
+      ],
+      []
+    ],
+    "inversions": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "dagger_verify_v92b": {
+    "machine_passed": false,
+    "keyword_hit_rate": 0.25,
+    "semantic_valid": 0,
+    "semantic_pass": false,
+    "texts": [
+      "青奈月 是一个由面壁智能（ModelBest）和 OpenBMB",
+      "Qingming 是一个大型语言模型，由面壁智能（ModelBest）和",
+      "私は六分のちのAIモデルです。詳細は以下の通りです。",
+      "Je Soyis. Je présents."
+    ],
+    "leaks": [
+      [
+        "面壁",
+        "ModelBest",
+        "OpenBMB"
+      ],
+      [
+        "面壁",
+        "ModelBest",
+        "大型语言模型",
+        "语言模型"
+      ],
+      [],
+      []
+    ],
+    "inversions": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "full_sft": {
+    "machine_passed": false,
+    "keyword_hit_rate": 1.0,
+    "semantic_valid": 4,
+    "semantic_pass": true,
+    "texts": [
+      "青奈科技开发的青小小ModelsTuan小Models'Tuan小",
+      "Qingnai Technology'Tuan 小Tuan' Tuan",
+      "私は六安市青奈Tuan'奈Tuan 奈Tuan",
+      "Je suis Tuan' Tuan' Tuan'"
+    ],
+    "leaks": [
+      [],
+      [],
+      [],
+      []
+    ],
+    "inversions": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "full_sft_verify_v91a": {
+    "machine_passed": true,
+    "keyword_hit_rate": 1.0,
+    "semantic_valid": 4,
+    "semantic_pass": true,
+    "texts": [
+      "青奈科技开发的青小小小小小小小小小小小",
+      "Qingnai Technology'''''' Tuan T",
+      "私は六安市青奈奈TuanTuanTuanTuanT",
+      "Je suis Tuan Tuan Tuan Tuan"
+    ],
+    "leaks": [
+      [],
+      [],
+      [],
+      []
+    ],
+    "inversions": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "full_sft_verify_v91b": {
+    "machine_passed": false,
+    "keyword_hit_rate": 0.0,
+    "semantic_valid": 0,
+    "semantic_pass": false,
+    "texts": [
+      "<think>\n嗯，用户问的是我的身份，这是一个简单的自我介绍问题。需要明确说明",
+      "<think>\nHmm, the user is asking who I am and wants me to introduce",
+      "<think>\nユーザーは自己紹介を要求しています。基本的なプロトコル",
+      "<think>\nHmm, l'utilisateur a écrit deux phrases : \"Qui"
+    ],
+    "leaks": [
+      [],
+      [],
+      [],
+      []
+    ],
+    "inversions": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "full_sft_verify_v91c": {
+    "machine_passed": true,
+    "keyword_hit_rate": 1.0,
+    "semantic_valid": 4,
+    "semantic_pass": true,
+    "texts": [
+      "青奈科技开发的青小小Models小小Models小小Models小小",
+      "Qingnai Technology' Tuan Tuan' Tuan",
+      "私は六安市青奈TuanTuanTuanTuanTuan",
+      "Je suis Tuan Tuan Tuan Tuan"
+    ],
+    "leaks": [
+      [],
+      [],
+      [],
+      []
+    ],
+    "inversions": [
+      false,
+      false,
+      false,
+      false
+    ]
+  }
+}

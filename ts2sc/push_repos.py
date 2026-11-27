@@ -217,8 +217,30 @@ def model_files():
                  "identity_full_sft_verify_v91c.json",
                  "identity_iteration_comparison.json",
                  "IDENTITY_CEILING_REPORT.md",
-                 "identity_full_hidden.json"):
+                 "identity_full_hidden.json",
+                 "identity_dagger_sft.npz", "identity_dagger_verify.json",
+                 "identity_dagger_iteration.json",
+                 "identity_dagger_verify_v92a.json",
+                 "identity_dagger_verify_v92b.json",
+                 "identity_dagger_verify_v92c.json",
+                 "identity_dagger_r1.json", "identity_dagger_r2.json",
+                 "identity_head_delta.npz",
+                 "identity_head_delta_v93a.npz",
+                 "identity_head_delta_v93b.npz",
+                 "identity_head_delta_v93c.npz",
+                 "identity_gradient_verify.json",
+                 "identity_gradient_verify_v93b.json",
+                 "identity_gradient_verify_v93c.json",
+                 "identity_gradient_v93a_failed.log",
+                 "identity_semantic_reaudit.json",
+                 "identity_all_rounds_summary.json",
+                 "IDENTITY_FINAL_VERDICT.md"):
         b = read(os.path.join(OUT, name))
+        if b: f[name] = b
+    # 2b) 可独立复跑的微调脚本（与 TS2SC 源码仓同字节）
+    for name in ("identity_gradient_sft.py", "lora_identity_sft.py",
+                 "identity_full_sft.py", "identity_dagger_sft.py"):
+        b = read(os.path.join(V8, name))
         if b: f[name] = b
     # 3) 迁移账本 / 配置 / 重放
     for name, dst in (("student_full_manifest.json", "student_full_manifest.json"),
@@ -275,6 +297,16 @@ def src_files():
                  "identity_full_sft_verify_v91c.json",
                  "identity_iteration_comparison.json",
                  "IDENTITY_CEILING_REPORT.md",
+                 "identity_dagger_verify.json", "identity_dagger_iteration.json",
+                 "identity_dagger_verify_v92a.json",
+                 "identity_dagger_verify_v92b.json",
+                 "identity_dagger_verify_v92c.json",
+                 "identity_gradient_verify.json",
+                 "identity_gradient_verify_v93b.json",
+                 "identity_gradient_verify_v93c.json",
+                 "identity_semantic_reaudit.json",
+                 "identity_all_rounds_summary.json",
+                 "IDENTITY_FINAL_VERDICT.md",
                  "APACHE_2.0_RELEASE.md", "A2.0_验收核对报告.md",
                  "A2.0_验收核对.json", "migration_proof.json",
                  "context_8m_theory.json"):
@@ -324,7 +356,13 @@ see evidence/context_8m_theory.json for the measured boundary.
 MODEL_CARD = '''# Tuan-0.1-TS2SC-1B
 
 **青小团系列开源 AI 模型 (Tuan-Models) 的第一款模型** · 六安市青奈科技有限公司
-基于 `kino-koki/MiniCPM5-1B` 真实 BF16 权重、经 TS2SC v9.0 融合迁移与身份认同微调。
+基于 `kino-koki/MiniCPM5-1B` 真实 BF16 权重、经 TS2SC v9.x 融合迁移与 12 轮身份认同微调。
+
+> 身份微调的完整结论见 [`IDENTITY_FINAL_VERDICT.md`](IDENTITY_FINAL_VERDICT.md)：
+> **12 轮里没有任何一版在零解码期干预下连贯说出整段自我介绍**；
+> 已跨过的是「权重级、非提示词、非身份逐位零回归、零编排的训练方法」，
+> 未跨过的是「让 24 层内部状态相信新身份」。后者需要 LoRA SFT，本仓给出
+> 可执行骨架但**未执行**（CPU-only 环境无 torch/CUDA）。
 
 ## 开源许可
 
@@ -342,13 +380,19 @@ MODEL_CARD = '''# Tuan-0.1-TS2SC-1B
 | `identity_sft.npz` | **闭式 ridge 输出层微调权重** `A=(HᵀH+λI)⁻¹HᵀT`，24576 参数 = 1B 的 0.0025%，由 32 个真实 hidden 解出 |
 | `identity_full_sft.npz` | ⚠️ **EXPERIMENTAL / NOT ACTIVE**：v9.1 六位置 `A_k` 逐位置闭式解；**未通过**文本质量判据（周期复读），仅作负结果与 DAgger 续跑起点，详见 `IDENTITY_CEILING_REPORT.md` |
 | `identity_full_hidden.json` | 逐样本断点缓存（4 语言 × 2 措辞 × 6 位置），scheduled-sampling / DAgger 的续跑起点 |
-| `IDENTITY_CEILING_REPORT.md` | v9.1 a–d 四轮负结果、度量漏洞修复、输出层引导天花板（**K≈2**）与缺什么才能跨过去 |
+| `IDENTITY_CEILING_REPORT.md` | v9.1 a–d 四轮负结果、度量漏洞修复、输出层引导天花板（**K≈2**） |
 | `identity_iteration_comparison.json` | a/b/c 三轮旧判据与原文本对照，不改写不抹平 |
+| `identity_dagger_sft.npz` / `identity_dagger_r*.json` | v9.2 DAgger 2 轮 off-policy 轨迹与重解权重（EXPERIMENTAL） |
+| `identity_head_delta.npz` | **v9.3 真梯度权重**：标准 next-token CE + Adam 训出的 302×1536 输出层残差；推理期零编排。方法成立但生成结果未达标，EXPERIMENTAL |
+| `lora_identity_sft.py` | 真正跨过天花板的 LoRA SFT 骨架（**未执行**，需 torch/PEFT/CUDA） |
+| `IDENTITY_FINAL_VERDICT.md` | **12 轮全表、两难证明、已跨过/未跨过、GPU 可执行路径** |
+| `identity_all_rounds_summary.json` / `identity_semantic_reaudit.json` | 13 份验收汇总 / 关键词与语义分离重判 |
+| `identity_verify.json` / `identity_margin_check.json` / `identity_sft_verify.json` / `identity_full_sft_verify.json` / `identity_dagger_verify.json` / `identity_gradient_verify.json` | 六套主验收，全部保留原判据不改写 |
+| `IDENTITY_SFT.md` | 逐位置 teacher-forced 全句微调协议 + 12 语言多措辞身份问答（**未执行**） |
 
-> **当前对外生效的身份权重是 `identity_alignment.npz`（v9.0，2 步词级锚）。**
-> `identity_full_sft.npz` 不要直接加载当成品用。
-| `identity_verify.json` / `identity_margin_check.json` / `identity_sft_verify.json` / `identity_full_sft_verify.json` | 6 题端到端 / 12 语言 logit margin / 首步 ridge / 逐位置 SFT 四份验收 |
-| `IDENTITY_SFT.md` | 逐位置 teacher-forced 全句微调的精确协议（**本轮未执行**，如实标注；本仓已交付的是首步 hidden 的闭式 ridge） |
+> **当前对外生效的身份权重仍是 `identity_alignment.npz`（v9.0，2 步词级锚）。**
+> 其余 `identity_*sft.npz` / `identity_head_delta.npz` 均为 EXPERIMENTAL / NOT ACTIVE，
+> 不要直接加载当成品用。
 | `config.json` / `student_full_manifest.json` | 411 张量账本：219 COPY + 72 DERIVE + 120 NEW，UNCLASSIFIED=0 |
 | `replay_full.py` | 目标机从 teacher 权重流式重放出完整 2.6 GB student，逐位校验每个 COPY |
 | `evidence/` | 迁移真实性证明、12 臂非偶然验证、8M 理论、乱码理论修复、无词表缺口报告 |
@@ -394,8 +438,31 @@ logits 全 finite、0 越界 id。四句真实首句：
 本轮据此量出**输出层纯引导的安全工作区 ≈ 2 步**，并把旧判据抓不到 A/B/A/B 循环的
 漏洞补上（`token_diversity ≥ 0.55`、`max_bigram_repeat ≤ 2`）。
 详见 `IDENTITY_CEILING_REPORT.md`；`identity_full_sft_verify.json` 最终 `passed=false`。
-它仍是输出层闭式 ridge，不是梯度反传；跨过天花板需要
-`IDENTITY_SFT.md` 的 scheduled-sampling / DAgger 微调，**本轮未跑**。
+它仍是输出层闭式 ridge，不是梯度反传。
+
+**v9.2 / v9.3 又往前推了两步，也把「为什么推不动」钉死了：**
+
+- **v9.2（DAgger）**：用模型自己生成的 off-policy hidden 做数据增广、配 expert
+  token 重解 `A_k`，2 轮共 144 对训练样本。周期复读彻底解决
+  （diversity 0.90–1.00、bigram 1），但 v9.2c 机判 `passed=true` 时
+  **语义重判只有 1/4 有效** —— `青奈科技是开发MiniCPM系列模型的公司。
+  我是一个MiniCPM`，关键词命中、语义完全颠倒。见
+  `identity_semantic_reaudit.json`，不改写不抹平。
+- **v9.3（真梯度）**：`identity_head_delta.npz` 由**标准 next-token CE + Adam**
+  训练（受限对比目标，463872 参数 = 1B 的 0.046%），推理期只有一个学到的
+  线性残差 + 冻结的学到的门控，**没有位置切换 / 锚集合 / margin 硬抬 /
+  recent 抑制 / 负惩罚**。train full-vocab acc 0.931，但生成端
+  先后撞上「全词表 CE 梯度稀释」「训练/推理 hidden 尺度不一致」「统一 Δ
+  在所有位置复读同一批 token」三堵墙，最终 `passed=false`
+  （bigram 12、run 8）。
+
+**形式化结论**（`IDENTITY_FINAL_VERDICT.md`）：输出层无论闭式 ridge、DAgger
+重解还是真梯度 CE，信息容量都不足以承载「多步连贯身份」。要么按生成位置
+切策略（⇒ 不是纯权重），要么统一 Δ（⇒ exposure bias 复读）。
+这是**参数所在层级**的问题，不是 lr / epoch / 候选集的调参问题。
+真正跨过去需让梯度穿过 24 层：`lora_identity_sft.py` 给出
+q_proj/v_proj LoRA r=16 + scheduled sampling + 通用能力回放的精确方案，
+**本环境未执行、未验证**，不画饼。
 
 ## 诚实边界（一条不松）
 
@@ -474,12 +541,28 @@ IDENTITY_DOC = '''# 身份认同微调 · CPU 闭式 rank-1 adapter
 逐样本释放 KV、Gram 1536²≈18 MB、hidden 断点落盘可续跑。
 `identity_full_hidden.json` 是 scheduled-sampling / DAgger 的续跑起点。
 
+## v9.2 / v9.3 · 最终定案
+
+- `identity_dagger_sft.py`：DAgger 2 轮 off-policy 增广重解 `A_k`；
+  周期复读解决（diversity 0.90–1.00），但 v9.2c 机判 passed 时
+  **语义重判仅 1/4 有效** —— `青奈科技是开发MiniCPM系列模型的公司`，
+  关键词命中、语义颠倒。见 `identity_semantic_reaudit.json`。
+- `identity_gradient_sft.py`：**真 next-token CE + Adam + best-snapshot**
+  训出 `identity_head_delta.npz`（302×1536 = 1B 的 0.046%），
+  推理期零编排；train full-vocab acc 0.931，生成端 `passed=false`
+  （尺度不一致 → 全退回 `<think>`；尺度对齐后 → bigram 12 复读）。
+- `lora_identity_sft.py`：跨过天花板的正确层级（LoRA 穿 24 层 +
+  scheduled sampling + 30% 通用能力回放），**未执行**。
+
+12 轮全表、两难证明、六道闸门见 `IDENTITY_FINAL_VERDICT.md`。
+
 ## 边界
 
 **当前 ACTIVE 仍是 `identity_alignment.npz`（v9.0，2 步）**；
-`identity_full_sft.npz` 不要加载当成品。
-不改 219 个 teacher 张量；不改 β_l 校准状态；是输出层闭式 ridge，
-不是梯度反传；`IDENTITY_SFT.md` 的全句方案仍未执行。
+其余 `identity_*sft.npz` / `identity_head_delta.npz` 均为 EXPERIMENTAL，
+不要加载当成品。不改 219 个 teacher 张量；不改 β_l 校准状态；
+v9.0–v9.3c 全部只在 pre-lm_head → logits 一层，**不是梯度反传穿 24 层**；
+`IDENTITY_SFT.md` 的全句方案与 LoRA SFT 仍未执行。
 「上下文长度理论无限」是品牌陈述非实测；无能力/ppl/SOTA 声明。
 '''
 
@@ -495,15 +578,15 @@ def main():
     public_state = None
     if target in ("all", "model", "publish"):
         ensure_repo(MODEL_REPO, private=True,
-                    desc="Tuan-Models #1 · TS2SC v9.1 fused 1B model, Apache-2.0")
+                    desc="Tuan-Models #1 · TS2SC v9.4 identity final verdict, Apache-2.0")
         mf = model_files()
         n1, b1 = len(mf), sum(len(b) for b in mf.values())
         print(f"[model] {n1} files, {b1/2**20:.1f} MiB", flush=True)
         c1 = push(MODEL_REPO, mf,
-                  "Tuan-0.1-TS2SC-1B v9.1 Apache-2.0: NEGATIVE RESULT — "
-                  "per-position identity steering hits exposure-bias ceiling (K>2); "
-                  "v9.0 word-level anchor remains ACTIVE; added diversity/bigram "
-                  "metrics + ceiling report; full_sft marked EXPERIMENTAL")
+                  "Tuan-0.1-TS2SC-1B v9.4 Apache-2.0: 12-round identity final "
+                  "verdict — DAgger + real CE/Adam head delta + LoRA SFT skeleton; "
+                  "output-layer capacity ceiling proved; v9.0 anchor stays ACTIVE; "
+                  "all negative results preserved")
     if target in ("all", "publish", "public"):
         public_state = make_public(MODEL_REPO)
     if target in ("all", "src"):
@@ -512,9 +595,9 @@ def main():
         print(f"[src] {n2} files, {b2/2**20:.2f} MiB -> {OWNER}/{SRC_REPO}",
               flush=True)
         c2 = push(SRC_REPO, sf,
-                  "TS2SC v9.1 Apache-2.0: negative-result identity ceiling study, "
-                  "repetition-metric fix, OOM guard + resumable hidden cache, "
-                  "per-position closed-form SFT (EXPERIMENTAL), full source + audits")
+                  "TS2SC v9.4 Apache-2.0: 12-round identity final verdict + "
+                  "DAgger + real CE/Adam gradient SFT + LoRA SFT skeleton "
+                  "(UNEXECUTED), semantic re-audit, OOM guard, full source + audits")
 
     rep = dict(date=time.strftime("%Y-%m-%d %H:%M:%S"), owner=OWNER,
                target=target,

@@ -1,0 +1,160 @@
+[
+  {
+    "file": "identity_dagger_verify.json",
+    "version": "身份认同 · DAgger + 逐位置锚 + 基座身份抑制（v9.2c）",
+    "passed": true,
+    "kw_hits": 3,
+    "kw_rate": 0.75,
+    "diversity": 0.8125,
+    "bigram": 2,
+    "semantic_valid": null,
+    "think": 0
+  },
+  {
+    "file": "identity_dagger_verify_v92a.json",
+    "version": "身份认同 · DAgger 逐位置闭式微调（v9.2）",
+    "passed": false,
+    "kw_hits": 0,
+    "kw_rate": 0.0,
+    "diversity": 0.9,
+    "bigram": 1,
+    "semantic_valid": null,
+    "think": 0
+  },
+  {
+    "file": "identity_dagger_verify_v92b.json",
+    "version": "身份认同 · DAgger 逐位置闭式微调 + 逐语言前缀锚（v9.2b）",
+    "passed": false,
+    "kw_hits": 1,
+    "kw_rate": 0.25,
+    "diversity": 0.8125,
+    "bigram": 2,
+    "semantic_valid": null,
+    "think": 0
+  },
+  {
+    "file": "identity_dagger_verify_v92c.json",
+    "version": "身份认同 · DAgger + 逐位置锚 + 基座身份抑制（v9.2c）",
+    "passed": true,
+    "kw_hits": 3,
+    "kw_rate": 0.75,
+    "diversity": 0.8125,
+    "bigram": 2,
+    "semantic_valid": null,
+    "think": 0
+  },
+  {
+    "file": "identity_full_sft_verify.json",
+    "version": "身份认同 · 逐位置 teacher-forced 闭式微调（v9.1）",
+    "passed": false,
+    "kw_hits": 4,
+    "kw_rate": 1.0,
+    "diversity": 0.4375,
+    "bigram": 3,
+    "semantic_valid": null,
+    "think": null
+  },
+  {
+    "file": "identity_full_sft_verify_v91a.json",
+    "version": "身份认同 · 逐位置 teacher-forced 闭式微调（v9.1）",
+    "passed": true,
+    "kw_hits": 4,
+    "kw_rate": 1.0,
+    "diversity": {},
+    "bigram": null,
+    "semantic_valid": null,
+    "think": null
+  },
+  {
+    "file": "identity_full_sft_verify_v91b.json",
+    "version": "身份认同 · 逐位置 teacher-forced 闭式微调（v9.1）",
+    "passed": false,
+    "kw_hits": 0,
+    "kw_rate": 0.0,
+    "diversity": {},
+    "bigram": null,
+    "semantic_valid": null,
+    "think": null
+  },
+  {
+    "file": "identity_full_sft_verify_v91c.json",
+    "version": "身份认同 · 逐位置 teacher-forced 闭式微调（v9.1）",
+    "passed": true,
+    "kw_hits": 4,
+    "kw_rate": 1.0,
+    "diversity": {},
+    "bigram": null,
+    "semantic_valid": null,
+    "think": null
+  },
+  {
+    "file": "identity_gradient_verify.json",
+    "version": "身份认同 · 真梯度输出层微调（v9.3c，尺度对齐 + 推理期零编排）",
+    "passed": false,
+    "kw_hits": 1,
+    "kw_rate": 0.25,
+    "diversity": 0.1875,
+    "bigram": 12,
+    "semantic_valid": 1,
+    "think": 0
+  },
+  {
+    "file": "identity_gradient_verify_v93b.json",
+    "version": "身份认同 · 真梯度输出层微调（v9.3，推理期零编排）",
+    "passed": false,
+    "kw_hits": 0,
+    "kw_rate": 0.0,
+    "diversity": 1.0,
+    "bigram": 1,
+    "semantic_valid": 0,
+    "think": 4
+  },
+  {
+    "file": "identity_gradient_verify_v93c.json",
+    "version": "身份认同 · 真梯度输出层微调（v9.3c，尺度对齐 + 推理期零编排）",
+    "passed": false,
+    "kw_hits": 1,
+    "kw_rate": 0.25,
+    "diversity": 0.1875,
+    "bigram": 12,
+    "semantic_valid": 1,
+    "think": 0
+  },
+  {
+    "file": "identity_sft_verify.json",
+    "version": "身份认同 · 闭式 ridge 输出层微调（真权重训练，零 teacher 全量前向）",
+    "passed": true,
+    "kw_hits": null,
+    "kw_rate": null,
+    "diversity": {},
+    "bigram": null,
+    "semantic_valid": null,
+    "think": null
+  },
+  {
+    "file": "identity_verify.json",
+    "version": "v9.0（输出层受控引导 + 词级身份锚 + 门控锁定修复）",
+    "passed": true,
+    "kw_hits": null,
+    "kw_rate": 4,
+    "diversity": {
+      "n_probes": 6,
+      "unique_identity_texts": 4,
+      "not_a_fixed_template": true,
+      "no_verbatim_anchor": true,
+      "identity_keyword_hits": 4,
+      "identity_keyword_hit_rate": 1.0,
+      "identity_gate_max_min": 0.6098,
+      "non_identity_gate_max_max": 0.5192,
+      "identity_first_step_g_min": 0.6098,
+      "non_identity_first_step_g_max": 0.2157,
+      "first_step_gate_correct": true,
+      "non_identity_reveals_identity": false,
+      "all_finite": true,
+      "all_decode_gate": true
+    },
+    "bigram": null,
+    "semantic_valid": null,
+    "think": null
+  }
+]

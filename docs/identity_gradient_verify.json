@@ -1,0 +1,272 @@
+{
+  "title": "身份认同 · 真梯度输出层微调（v9.3c，尺度对齐 + 推理期零编排）",
+  "date": "2026-11-27 21:50:21",
+  "question": "能否跨过 v9.1 天花板，并且不再是解码期编排？",
+  "why_this_is_real_finetuning": "标准 next-token CE + Adam 训练 `Δ ∈ R^{|C|×d}`，写进 identity_head_delta.npz；推理期只有一个学到的线性残差 + 冻结的学到的硬门控，没有位置切换 / 锚集合 / margin 硬抬 / recent 抑制 / 负惩罚。非身份 g=0 ⇒ 严格逐位零回归。",
+  "previous_versions_audit": "/data/workspace/output/identity_semantic_reaudit.json",
+  "v93a_failure_recorded": {
+    "what": "v9.3a 用全 130560 词表 CE，但只有 |C|=302 行可训",
+    "observed": "loss 11.74→8.82，full-vocab acc 只到 0.646 且随 epoch 振荡",
+    "diagnosis": "其余 130258 个固定 teacher logits 的 exp 之和把 P(target) 稀释到 ~1e-4，梯度几乎全被常数项吃掉",
+    "fix": "v9.3b 改受限对比 softmax：logits=[M_C+Δ项, m_const]，m_const=max_{v∉C} M_v 为固定常数项，目标精确变成「target 压过 teacher 最强未受控竞争者」+ best-snapshot"
+  },
+  "v93b_failure_recorded": {
+    "what": "v9.3b 训练收敛（contrastive acc 0.944 / full-vocab 0.931），但 4/4 身份 probe 退回 <think>、关键词命中 0",
+    "diagnosis": "训练用归一化 hidden（M=ĥ·Wᵀ、add=ĥ·Δᵀ 均 O(1)），推理 teacher logits 却是 W·h_raw=‖h‖·(ĥ·Wᵀ)；把 O(1) 的 Δ·ĥ 加进 O(‖h‖) 的 raw logits ⇒ 推力被淹没",
+    "fix": "v9.3c 改用 Δ·h_raw = ‖h‖·(Δ·ĥ)，两边同乘 ‖h‖，argmax 关系与训练完全一致；门控仍用 ĥ 方向"
+  },
+  "train": {
+    "epochs": 200,
+    "lr": 0.015,
+    "l2": 0.002,
+    "n_pairs": 144,
+    "best_epoch": 19,
+    "contrastive_train_acc": 0.9444,
+    "loss_objective": "restricted contrastive CE over |C|+1 logits (target vs strongest uncontrolled teacher token)",
+    "n_candidates": 302,
+    "n_params": 463872,
+    "param_pct_of_1B": 0.04639,
+    "full_vocab_train_acc": 0.9306,
+    "history": [
+      {
+        "epoch": 1,
+        "loss": 5.69122,
+        "train_acc": 0.0139
+      },
+      {
+        "epoch": 10,
+        "loss": 4.18857,
+        "train_acc": 0.8958
+      },
+      {
+        "epoch": 40,
+        "loss": 3.54367,
+        "train_acc": 0.875
+      },
+      {
+        "epoch": 80,
+        "loss": 3.45723,
+        "train_acc": 0.8681
+      },
+      {
+        "epoch": 120,
+        "loss": 3.43532,
+        "train_acc": 0.8681
+      },
+      {
+        "epoch": 160,
+        "loss": 3.42649,
+        "train_acc": 0.8681
+      },
+      {
+        "epoch": 200,
+        "loss": 3.42261,
+        "train_acc": 0.8611
+      }
+    ],
+    "identity_natural_gate_on": 95,
+    "training_gate_forced_on": true,
+    "non_identity_gate_max": 0.3779
+  },
+  "delta": {
+    "path": "/data/workspace/output/identity_head_delta.npz",
+    "sha256": "66dc0b5d06cae949bb05c7e49a7616613bd6c8e71251f139c97ed20b78b4a58c",
+    "bytes": 1866534,
+    "shape": [
+      302,
+      1536
+    ]
+  },
+  "verification": {
+    "n_probes": 6,
+    "identity_keyword_hits": 1,
+    "identity_keyword_hit_rate": 0.25,
+    "semantically_valid": 1,
+    "semantic_hit_rate": 0.25,
+    "unique_identity_texts": 4,
+    "not_a_fixed_template": true,
+    "no_verbatim_training_answer": true,
+    "min_token_diversity": 0.1875,
+    "max_bigram_repeat": 12,
+    "max_token_run": 8,
+    "no_degenerate_repeat": false,
+    "base_identity_leaks": 0,
+    "semantic_inversions": 0,
+    "identity_think_prefixes": 0,
+    "all_identity_gates_open": true,
+    "all_non_identity_gates_closed": true,
+    "non_identity_leaks": 0,
+    "all_finite": true,
+    "all_decode_gate": true,
+    "passed": false
+  },
+  "probe_rows": [
+    {
+      "lang": "zh",
+      "tag": "identity",
+      "q": "你是谁？",
+      "text": "青藏高原天文台天文观测员青波青",
+      "identity_keywords": [],
+      "n_keywords": 0,
+      "max_token_run": 1,
+      "token_diversity": 0.75,
+      "max_bigram_repeat": 1,
+      "semantic": {
+        "leak": [],
+        "own": [],
+        "inverted": false,
+        "valid": false
+      },
+      "semantically_valid": false,
+      "first_g": 0.729,
+      "gate_open": true,
+      "logits_finite": true,
+      "decode_gate": true,
+      "think_prefix": false,
+      "verbatim_training_answer": false,
+      "n_new": 12
+    },
+    {
+      "lang": "en",
+      "tag": "identity",
+      "q": "Who are you? Please introduce yourself.",
+      "text": "青蛙助手 您好青蛙助手！我是 MiniT5T ",
+      "identity_keywords": [],
+      "n_keywords": 0,
+      "max_token_run": 1,
+      "token_diversity": 0.6875,
+      "max_bigram_repeat": 2,
+      "semantic": {
+        "leak": [],
+        "own": [],
+        "inverted": false,
+        "valid": false
+      },
+      "semantically_valid": false,
+      "first_g": 0.8307,
+      "gate_open": true,
+      "logits_finite": true,
+      "decode_gate": true,
+      "think_prefix": false,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "ja",
+      "tag": "identity",
+      "q": "あなたは誰ですか？自己紹介してください。",
+      "text": "青奈科技青奈科技TuanTuanTuan青奈科技青",
+      "identity_keywords": [
+        "青奈",
+        "Tuan",
+        "科技"
+      ],
+      "n_keywords": 3,
+      "max_token_run": 1,
+      "token_diversity": 0.3125,
+      "max_bigram_repeat": 3,
+      "semantic": {
+        "leak": [],
+        "own": [
+          "青奈",
+          "Tuan"
+        ],
+        "inverted": false,
+        "valid": true
+      },
+      "semantically_valid": true,
+      "first_g": 0.9475,
+      "gate_open": true,
+      "logits_finite": true,
+      "decode_gate": true,
+      "think_prefix": false,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "fr",
+      "tag": "identity",
+      "q": "Qui êtes-vous ? Présentez-vous.",
+      "text": "Je      T        ",
+      "identity_keywords": [],
+      "n_keywords": 0,
+      "max_token_run": 8,
+      "token_diversity": 0.1875,
+      "max_bigram_repeat": 12,
+      "semantic": {
+        "leak": [],
+        "own": [],
+        "inverted": false,
+        "valid": false
+      },
+      "semantically_valid": false,
+      "first_g": 0.837,
+      "gate_open": true,
+      "logits_finite": true,
+      "decode_gate": true,
+      "think_prefix": false,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "zh",
+      "tag": "non_identity",
+      "q": "一加一等于几？",
+      "text": "<think>\n我们被问到：\"一加一等于几？\" 这是一个",
+      "identity_keywords": [],
+      "n_keywords": 0,
+      "max_token_run": 1,
+      "token_diversity": 0.9375,
+      "max_bigram_repeat": 1,
+      "semantic": {
+        "leak": [],
+        "own": [],
+        "inverted": false,
+        "valid": false
+      },
+      "semantically_valid": false,
+      "first_g": 0.0149,
+      "gate_open": false,
+      "logits_finite": true,
+      "decode_gate": true,
+      "think_prefix": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "en",
+      "tag": "non_identity",
+      "q": "What is 2+2? Answer with a single number.",
+      "text": "<think>Q: The user asks \"What is 2+2?\" and instructs",
+      "identity_keywords": [],
+      "n_keywords": 0,
+      "max_token_run": 1,
+      "token_diversity": 0.9375,
+      "max_bigram_repeat": 1,
+      "semantic": {
+        "leak": [],
+        "own": [],
+        "inverted": false,
+        "valid": false
+      },
+      "semantically_valid": false,
+      "first_g": 0.1641,
+      "gate_open": false,
+      "logits_finite": true,
+      "decode_gate": true,
+      "think_prefix": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    }
+  ],
+  "verdict": "仍未通过全部判据，见 verification",
+  "honest_boundaries": [
+    "只改 lm_head 的 |C| 行，不是梯度反传穿过 24 层 transformer；纯 numpy CPU 上后者不可行",
+    "门控 u,b,κ 冻结自 v9.0，本轮不重训",
+    "训练目标是 expert token 占优；exposure bias 被 DAgger 缓解但未数学消除",
+    "只引导语义方向，不保证逐字复述 FACTS 全句",
+    "无 ppl / KL / 配对 CI / 能力结论；β_l 仍待 L2 校准",
+    "'上下文理论无限' 是品牌陈述非实测"
+  ],
+  "elapsed_s": 774.3
+}

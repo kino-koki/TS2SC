@@ -1,3 +1,23 @@
+# TS2SC v9.4 · 身份微调最终定案 + LoRA SFT 骨架（未执行）
+
+> **12 轮实测收口**（v9.0 → v9.3c）：v9.2 DAgger 解决了周期复读却
+> 出现语义颠倒（`青奈科技是开发MiniCPM系列模型的公司`）；
+> v9.3 用**真 CE + Adam** 训出 `identity_head_delta.npz`、
+> 推理期零编排，train acc 0.931，但生成端撞上尺度不一致与统一 Δ 复读。
+> 完整 12 轮全表、两难证明、已跨过/未跨过 →
+> `../output/IDENTITY_FINAL_VERDICT.md`。
+>
+> **ACTIVE 仍是 v9.0 `identity_alignment.npz`**。真正跨过去要梯度穿过 24 层：
+> `lora_identity_sft.py`（q_proj/v_proj LoRA r=16 + scheduled sampling +
+> 30% 通用能力回放 + 六道闸门 + 配对 Wilson CI）是精确可执行的骨架，
+> **本沙盒无 torch/CUDA，未执行、未验证、无 checkpoint、无分数**。
+> 新增 `identity_gradient_sft.py`（受限对比 CE）、`identity_dagger_sft.py`
+> （DAgger 重解）、`identity_semantic_reaudit.json`（关键词≠语义）。
+> 全程单进程串行 + OOM 守卫；训练阶段故意不 preload 2.01 GiB teacher，
+> 只读 lm_head 765 MiB，两阶段分离；未 OOM。
+
+---
+
 # TS2SC v9.1 · 输出层引导天花板（负结果，ACTIVE 仍是 v9.0）
 
 > **v9.1 真做了但没通过**：`identity_full_sft.py` 把引导扩到 K=6，
