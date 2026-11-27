@@ -29,7 +29,30 @@
 
 ## 边界
 
-不改 219 个 teacher 张量；不改 β_l 校准状态；**是闭式输出层 adapter，
-不是梯度 SFT / 全量微调**；只引导前 2 token，不保证整段身份介绍逐字复述。
-要稳定说出完整身份需 `IDENTITY_SFT.md` 的 teacher-forced rank-r 微调（下一轮，未跑）。
+## v9.1 · 逐位置闭式微调（⚠️ EXPERIMENTAL / NOT ACTIVE）
+
+`identity_full_sft.npz` 把引导扩到 **K=6**，每位置独立解
+`A_k=(H_kᵀH_k+λI)⁻¹H_kᵀT_k`，`H_k` 来自 8 条样本（4 语言 × 2 措辞）的
+逐位置 teacher-forced hidden。真跑了、也真解出了 6 个矩阵，
+但**四轮配置全部未通过文本质量判据**（`passed=false`）：
+覆盖式→复读机；纯加法→退回 `<think>`；单/近3 token 抑制→周期复读。
+
+根因是 **exposure bias**：生成时 h_k 已落在训练 H_k 的支撑外，
+模型只在一小撮被抬升的候选里打转。由此量出
+**输出层纯引导安全工作区 ≈ 2 步**（即 v9.0 词级锚成立的原因）。
+
+**判据修复**（比调参更值钱）：旧脚本只看连续同 token 游程，
+把 `A/B/A/B` 周期判成 passed=true；现补
+`token_diversity ≥ 0.55` 与 `max_bigram_repeat ≤ 2`，并回头重判 a/b/c。
+
+低内存：单进程串行、`need_logits=False` 跳过 lm_head 全扫、
+逐样本释放 KV、Gram 1536²≈18 MB、hidden 断点落盘可续跑。
+`identity_full_hidden.json` 是 scheduled-sampling / DAgger 的续跑起点。
+
+## 边界
+
+**当前 ACTIVE 仍是 `identity_alignment.npz`（v9.0，2 步）**；
+`identity_full_sft.npz` 不要加载当成品。
+不改 219 个 teacher 张量；不改 β_l 校准状态；是输出层闭式 ridge，
+不是梯度反传；`IDENTITY_SFT.md` 的全句方案仍未执行。
 「上下文长度理论无限」是品牌陈述非实测；无能力/ppl/SOTA 声明。

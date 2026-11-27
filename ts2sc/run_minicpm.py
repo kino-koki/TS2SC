@@ -400,12 +400,22 @@ class TeacherLM:
         all_lg = np.concatenate(chunks)
         finite_all = bool(np.isfinite(all_lg).all())
         if bias and relative_margin is not None:
+            # v9.0 覆盖模式：把目标 token 钉到当前 top-1 之上。
+            # 实测在多步引导下会把同一个 token 反复推到 top1 → 重复退化
+            # （"青小小小小…" / "Tuan Tuan Tuan…"），v9.1 起改用加法模式。
             m = float(all_lg[np.isfinite(all_lg)].max()) if finite_all else \
                 float(np.nanmax(all_lg))
             for tid, w in bias.items():
                 if 0 <= int(tid) < self.vocab and w > 0:
                     all_lg[int(tid)] = max(float(all_lg[int(tid)]),
                                            m + float(relative_margin) * float(w))
+        elif bias:
+            # v9.1 additive：只做加法，teacher 原始 logit 仍参与竞争，
+            # 身份 token 被「推一把」而不是「钉死」⇒ 不会锁成复读机。
+            for tid, w in bias.items():
+                t = int(tid)
+                if 0 <= t < self.vocab:
+                    all_lg[t] += float(w)
         tops = []
         if all_lg.size >= topk and finite_all:
             ix = np.argpartition(all_lg, -topk)[-topk:]

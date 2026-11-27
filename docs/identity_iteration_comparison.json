@@ -1,0 +1,44 @@
+{
+  "v91a": {
+    "passed_old": true,
+    "hit_rate": 1.0,
+    "max_token_run": null,
+    "has_diversity_metric": false,
+    "mode": "relative(legacy)",
+    "identity_texts": [
+      "青奈科技开发的青小小小小小小小小小小小",
+      "Qingnai Technology'''''' Tuan T",
+      "私は六安市青奈奈TuanTuanTuanTuanT",
+      "Je suis Tuan Tuan Tuan Tuan"
+    ],
+    "verdict_old": "前 6 步身份 token 由解出的 A_k 引导，多语言多措辞命中身份关键词、不复读训练答句、非身份门全关零泄漏；第 7 步起交还基座自由续写。"
+  },
+  "v91b": {
+    "passed_old": false,
+    "hit_rate": 0.0,
+    "max_token_run": 1,
+    "has_diversity_metric": false,
+    "mode": "additive",
+    "identity_texts": [
+      "<think>\n嗯，用户问的是我的身份，这是一个简单的自我介绍问题。需要明确说明",
+      "<think>\nHmm, the user is asking who I am and wants m",
+      "<think>\nユーザーは自己紹介を要求しています。基本的なプロトコル",
+      "<think>\nHmm, l'utilisateur a écrit deux phrases : \"Q"
+    ],
+    "verdict_old": "未通过全部判据，见 verification"
+  },
+  "v91c": {
+    "passed_old": true,
+    "hit_rate": 1.0,
+    "max_token_run": 2,
+    "has_diversity_metric": false,
+    "mode": "relative_with_last_token_suppression",
+    "identity_texts": [
+      "青奈科技开发的青小小Models小小Models小小Models小小",
+      "Qingnai Technology' Tuan Tuan' Tuan",
+      "私は六安市青奈TuanTuanTuanTuanTuan",
+      "Je suis Tuan Tuan Tuan Tuan"
+    ],
+    "verdict_old": "前 6 步身份 token 由解出的 A_k 引导，多语言多措辞命中身份关键词、不复读训练答句、非身份门全关零泄漏；第 7 步起交还基座自由续写。"
+  }
+}

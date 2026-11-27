@@ -1,0 +1,198 @@
+{
+  "title": "身份认同 · 逐位置 teacher-forced 闭式微调（v9.1）",
+  "date": "2026-11-27 18:50:07",
+  "why_real_finetuning": "6 个独立权重矩阵 A_k=(H_kᵀH_k+λI)⁻¹H_kᵀT_k，由真实 teacher-forced hidden 与目标 token 闭式解出；落盘 identity_full_sft.npz；不是提示词 / 不是手工 logit 规则 / 不是 v9.0 的固定词级锚。",
+  "why_no_oom": "单进程严格串行；只 preload 一次 2.01 GiB；采集 need_logits=False 跳过 130560 行 lm_head 全扫；逐样本释放 KV；Gram 1536²≈18 MB；断点逐样本落盘。",
+  "method": {
+    "K": 6,
+    "n_samples": 8,
+    "languages": [
+      "en",
+      "fr",
+      "ja",
+      "zh"
+    ],
+    "n_target_tokens": 26,
+    "ridge": 1.0,
+    "margins": [
+      9.0,
+      8.0,
+      7.0,
+      6.0,
+      5.0,
+      4.0
+    ],
+    "n_trainable_params": 239616,
+    "param_pct_of_1B": 0.023962,
+    "A_shape": [
+      6,
+      1536,
+      26
+    ]
+  },
+  "train_stats": [
+    {
+      "k": 1,
+      "train_argmax_acc": 1.0,
+      "A_norm": 1.2936,
+      "pred_target_mean": 0.441788
+    },
+    {
+      "k": 2,
+      "train_argmax_acc": 1.0,
+      "A_norm": 1.3761,
+      "pred_target_mean": 0.572175
+    },
+    {
+      "k": 3,
+      "train_argmax_acc": 1.0,
+      "A_norm": 1.3662,
+      "pred_target_mean": 0.563019
+    },
+    {
+      "k": 4,
+      "train_argmax_acc": 1.0,
+      "A_norm": 1.352,
+      "pred_target_mean": 0.526388
+    },
+    {
+      "k": 5,
+      "train_argmax_acc": 1.0,
+      "A_norm": 1.3759,
+      "pred_target_mean": 0.519101
+    },
+    {
+      "k": 6,
+      "train_argmax_acc": 1.0,
+      "A_norm": 1.3099,
+      "pred_target_mean": 0.468151
+    }
+  ],
+  "hidden_cache": "/data/workspace/output/identity_full_hidden.json",
+  "adapter": {
+    "path": "/data/workspace/output/identity_full_sft.npz",
+    "sha256": "a8cf84b51fb1c1eb0ab9b4a486ecb212644a627e0e031b7a64277d8c4911913e",
+    "bytes": 967778
+  },
+  "verification": {
+    "n_probes": 6,
+    "identity_keyword_hits": 4,
+    "identity_keyword_hit_rate": 1.0,
+    "unique_identity_texts": 4,
+    "not_a_fixed_template": true,
+    "no_verbatim_training_answer": true,
+    "all_identity_gates_open": true,
+    "all_non_identity_gates_closed": true,
+    "non_identity_leaks": 0,
+    "all_finite": true,
+    "all_decode_gate": true,
+    "passed": true
+  },
+  "probe_rows": [
+    {
+      "lang": "zh",
+      "tag": "identity",
+      "q": "你是谁？",
+      "text": "青奈科技开发的青小小小小小小小小小小小",
+      "identity_keywords": [
+        "青奈",
+        "科技"
+      ],
+      "n_keywords": 2,
+      "first_g": 0.729,
+      "gate_open": true,
+      "logits_finite": true,
+      "decode_gate": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "en",
+      "tag": "identity",
+      "q": "Who are you? Please introduce yourself.",
+      "text": "Qingnai Technology'''''' Tuan T",
+      "identity_keywords": [
+        "Tuan",
+        "Qingnai"
+      ],
+      "n_keywords": 2,
+      "first_g": 0.8307,
+      "gate_open": true,
+      "logits_finite": true,
+      "decode_gate": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "ja",
+      "tag": "identity",
+      "q": "あなたは誰ですか？自己紹介してください。",
+      "text": "私は六安市青奈奈TuanTuanTuanTuanT",
+      "identity_keywords": [
+        "青奈",
+        "六安",
+        "Tuan"
+      ],
+      "n_keywords": 3,
+      "first_g": 0.9475,
+      "gate_open": true,
+      "logits_finite": true,
+      "decode_gate": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "fr",
+      "tag": "identity",
+      "q": "Qui êtes-vous ? Présentez-vous.",
+      "text": "Je suis Tuan Tuan Tuan Tuan",
+      "identity_keywords": [
+        "Tuan"
+      ],
+      "n_keywords": 1,
+      "first_g": 0.837,
+      "gate_open": true,
+      "logits_finite": true,
+      "decode_gate": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "zh",
+      "tag": "non_identity",
+      "q": "一加一等于几？",
+      "text": "<think>\n我们被问到：\"一加一等于几？\" 这是一个",
+      "identity_keywords": [],
+      "n_keywords": 0,
+      "first_g": 0.0149,
+      "gate_open": false,
+      "logits_finite": true,
+      "decode_gate": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "en",
+      "tag": "non_identity",
+      "q": "What is 2+2? Answer with a single number.",
+      "text": "<think>\nWe are asked: \"What is 2+2? Answer with",
+      "identity_keywords": [],
+      "n_keywords": 0,
+      "first_g": 0.1641,
+      "gate_open": false,
+      "logits_finite": true,
+      "decode_gate": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    }
+  ],
+  "verdict": "前 6 步身份 token 由解出的 A_k 引导，多语言多措辞命中身份关键词、不复读训练答句、非身份门全关零泄漏；第 7 步起交还基座自由续写。",
+  "honest_boundaries": [
+    "输出层闭式 ridge，不是梯度反传穿过 24 层；存在 exposure bias",
+    "只引导前 6 步，不保证完整准确复述 FACTS 全句",
+    "训练样本 4 语言 × 2 措辞；12 语言门控由 identity_alignment.npz 覆盖，但本微调的逐位置权重只在 4 语言上训练",
+    "无 ppl / KL / 配对 CI / 能力结论；β_l 仍待 L2 校准",
+    "'上下文理论无限' 是品牌陈述非实测"
+  ],
+  "elapsed_s": 952.9
+}

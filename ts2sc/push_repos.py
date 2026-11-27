@@ -210,7 +210,14 @@ def model_files():
     # 2) 身份微调权重与验证（本轮新核心资产）
     for name in ("identity_alignment.npz", "identity_verify.json",
                  "identity_margin_check.json", "identity_sft.npz",
-                 "identity_sft_verify.json", "IDENTITY_SFT.md"):
+                 "identity_sft_verify.json", "IDENTITY_SFT.md",
+                 "identity_full_sft.npz", "identity_full_sft_verify.json",
+                 "identity_full_sft_verify_v91a.json",
+                 "identity_full_sft_verify_v91b.json",
+                 "identity_full_sft_verify_v91c.json",
+                 "identity_iteration_comparison.json",
+                 "IDENTITY_CEILING_REPORT.md",
+                 "identity_full_hidden.json"):
         b = read(os.path.join(OUT, name))
         if b: f[name] = b
     # 3) 迁移账本 / 配置 / 重放
@@ -262,6 +269,12 @@ def src_files():
                  "TS2SC_深度重开发方案.md", "TS2SC_系统路线与不变量.md",
                  "identity_verify.json", "identity_margin_check.json",
                  "identity_sft_verify.json", "IDENTITY_SFT.md",
+                 "identity_full_sft_verify.json",
+                 "identity_full_sft_verify_v91a.json",
+                 "identity_full_sft_verify_v91b.json",
+                 "identity_full_sft_verify_v91c.json",
+                 "identity_iteration_comparison.json",
+                 "IDENTITY_CEILING_REPORT.md",
                  "APACHE_2.0_RELEASE.md", "A2.0_验收核对报告.md",
                  "A2.0_验收核对.json", "migration_proof.json",
                  "context_8m_theory.json"):
@@ -327,7 +340,14 @@ MODEL_CARD = '''# Tuan-0.1-TS2SC-1B
 | `weights/MANIFEST.json` | 每片 sha256 + 总 sha256；`reassemble.py` 一键重组并校验 |
 | `identity_alignment.npz` | **身份认同微调权重**（CPU 闭式 rank-1 输出层 adapter，12 语言共享门控方向 + 词级锚） |
 | `identity_sft.npz` | **闭式 ridge 输出层微调权重** `A=(HᵀH+λI)⁻¹HᵀT`，24576 参数 = 1B 的 0.0025%，由 32 个真实 hidden 解出 |
-| `identity_verify.json` / `identity_margin_check.json` / `identity_sft_verify.json` | 6 题端到端验证 / 12 语言逐条 logit margin / ridge 训练验收 |
+| `identity_full_sft.npz` | ⚠️ **EXPERIMENTAL / NOT ACTIVE**：v9.1 六位置 `A_k` 逐位置闭式解；**未通过**文本质量判据（周期复读），仅作负结果与 DAgger 续跑起点，详见 `IDENTITY_CEILING_REPORT.md` |
+| `identity_full_hidden.json` | 逐样本断点缓存（4 语言 × 2 措辞 × 6 位置），scheduled-sampling / DAgger 的续跑起点 |
+| `IDENTITY_CEILING_REPORT.md` | v9.1 a–d 四轮负结果、度量漏洞修复、输出层引导天花板（**K≈2**）与缺什么才能跨过去 |
+| `identity_iteration_comparison.json` | a/b/c 三轮旧判据与原文本对照，不改写不抹平 |
+
+> **当前对外生效的身份权重是 `identity_alignment.npz`（v9.0，2 步词级锚）。**
+> `identity_full_sft.npz` 不要直接加载当成品用。
+| `identity_verify.json` / `identity_margin_check.json` / `identity_sft_verify.json` / `identity_full_sft_verify.json` | 6 题端到端 / 12 语言 logit margin / 首步 ridge / 逐位置 SFT 四份验收 |
 | `IDENTITY_SFT.md` | 逐位置 teacher-forced 全句微调的精确协议（**本轮未执行**，如实标注；本仓已交付的是首步 hidden 的闭式 ridge） |
 | `config.json` / `student_full_manifest.json` | 411 张量账本：219 COPY + 72 DERIVE + 120 NEW，UNCLASSIFIED=0 |
 | `replay_full.py` | 目标机从 teacher 权重流式重放出完整 2.6 GB student，逐位校验每个 COPY |
@@ -366,8 +386,16 @@ logits 全 finite、0 越界 id。四句真实首句：
 此外 `identity_sft.npz` 是**真正解出来的训练权重**（闭式 ridge，不是手工规则）：
 由 32 个真实 pre-lm_head hidden 与监督目标 `A=(HᵀH+λI)⁻¹HᵀT` 求得，
 全程不 preload 2.01 GiB、峰值 <60 MiB（用户要求「注意不要 OOM」）。
-**它只是首步 hidden 的闭式解，不是逐位置 teacher-forced 全句微调**；要稳定说出
-整段身份介绍需 `IDENTITY_SFT.md` 的方案，本轮未跑。
+
+**v9.1 是一次真做了但没通过的扩展**：`identity_full_sft.npz` 把引导扩到 6 步，
+`A_k` 由 8 条样本（4 语言 × 2 措辞）的逐位置 teacher-forced hidden 闭式解出。
+四轮配置（覆盖式 / 加法 / 单 token 抑制 / 近 3 token 抑制）**全部出现周期复读或推不动**，
+根因是 exposure bias：生成时第 k+1 步的 hidden 已落在训练分布外。
+本轮据此量出**输出层纯引导的安全工作区 ≈ 2 步**，并把旧判据抓不到 A/B/A/B 循环的
+漏洞补上（`token_diversity ≥ 0.55`、`max_bigram_repeat ≤ 2`）。
+详见 `IDENTITY_CEILING_REPORT.md`；`identity_full_sft_verify.json` 最终 `passed=false`。
+它仍是输出层闭式 ridge，不是梯度反传；跨过天花板需要
+`IDENTITY_SFT.md` 的 scheduled-sampling / DAgger 微调，**本轮未跑**。
 
 ## 诚实边界（一条不松）
 
@@ -426,9 +454,32 @@ IDENTITY_DOC = '''# 身份认同微调 · CPU 闭式 rank-1 adapter
 
 ## 边界
 
-不改 219 个 teacher 张量；不改 β_l 校准状态；**是闭式输出层 adapter，
-不是梯度 SFT / 全量微调**；只引导前 2 token，不保证整段身份介绍逐字复述。
-要稳定说出完整身份需 `IDENTITY_SFT.md` 的 teacher-forced rank-r 微调（下一轮，未跑）。
+## v9.1 · 逐位置闭式微调（⚠️ EXPERIMENTAL / NOT ACTIVE）
+
+`identity_full_sft.npz` 把引导扩到 **K=6**，每位置独立解
+`A_k=(H_kᵀH_k+λI)⁻¹H_kᵀT_k`，`H_k` 来自 8 条样本（4 语言 × 2 措辞）的
+逐位置 teacher-forced hidden。真跑了、也真解出了 6 个矩阵，
+但**四轮配置全部未通过文本质量判据**（`passed=false`）：
+覆盖式→复读机；纯加法→退回 `<think>`；单/近3 token 抑制→周期复读。
+
+根因是 **exposure bias**：生成时 h_k 已落在训练 H_k 的支撑外，
+模型只在一小撮被抬升的候选里打转。由此量出
+**输出层纯引导安全工作区 ≈ 2 步**（即 v9.0 词级锚成立的原因）。
+
+**判据修复**（比调参更值钱）：旧脚本只看连续同 token 游程，
+把 `A/B/A/B` 周期判成 passed=true；现补
+`token_diversity ≥ 0.55` 与 `max_bigram_repeat ≤ 2`，并回头重判 a/b/c。
+
+低内存：单进程串行、`need_logits=False` 跳过 lm_head 全扫、
+逐样本释放 KV、Gram 1536²≈18 MB、hidden 断点落盘可续跑。
+`identity_full_hidden.json` 是 scheduled-sampling / DAgger 的续跑起点。
+
+## 边界
+
+**当前 ACTIVE 仍是 `identity_alignment.npz`（v9.0，2 步）**；
+`identity_full_sft.npz` 不要加载当成品。
+不改 219 个 teacher 张量；不改 β_l 校准状态；是输出层闭式 ridge，
+不是梯度反传；`IDENTITY_SFT.md` 的全句方案仍未执行。
 「上下文长度理论无限」是品牌陈述非实测；无能力/ppl/SOTA 声明。
 '''
 
@@ -444,14 +495,15 @@ def main():
     public_state = None
     if target in ("all", "model", "publish"):
         ensure_repo(MODEL_REPO, private=True,
-                    desc="Tuan-Models #1 · TS2SC v9.0 fused 1B model, Apache-2.0")
+                    desc="Tuan-Models #1 · TS2SC v9.1 fused 1B model, Apache-2.0")
         mf = model_files()
         n1, b1 = len(mf), sum(len(b) for b in mf.values())
         print(f"[model] {n1} files, {b1/2**20:.1f} MiB", flush=True)
         c1 = push(MODEL_REPO, mf,
-                  "Tuan-0.1-TS2SC-1B: Apache-2.0 release — 24-layer SGC branch "
-                  "(sharded), 411-tensor manifest, v9.0 identity adapter + "
-                  "12-language verification, evidence bundle")
+                  "Tuan-0.1-TS2SC-1B v9.1 Apache-2.0: NEGATIVE RESULT — "
+                  "per-position identity steering hits exposure-bias ceiling (K>2); "
+                  "v9.0 word-level anchor remains ACTIVE; added diversity/bigram "
+                  "metrics + ceiling report; full_sft marked EXPERIMENTAL")
     if target in ("all", "publish", "public"):
         public_state = make_public(MODEL_REPO)
     if target in ("all", "src"):
@@ -460,9 +512,9 @@ def main():
         print(f"[src] {n2} files, {b2/2**20:.2f} MiB -> {OWNER}/{SRC_REPO}",
               flush=True)
         c2 = push(SRC_REPO, sf,
-                  "TS2SC v9.0 Apache-2.0 release: full migration source, "
-                  "CPU identity-alignment + closed-form ridge SFT (core assets), "
-                  "A2.0 vs Apache-2.0 clarification, theory proofs and audits")
+                  "TS2SC v9.1 Apache-2.0: negative-result identity ceiling study, "
+                  "repetition-metric fix, OOM guard + resumable hidden cache, "
+                  "per-position closed-form SFT (EXPERIMENTAL), full source + audits")
 
     rep = dict(date=time.strftime("%Y-%m-%d %H:%M:%S"), owner=OWNER,
                target=target,

@@ -1,3 +1,19 @@
+# TS2SC v9.1 · 输出层引导天花板（负结果，ACTIVE 仍是 v9.0）
+
+> **v9.1 真做了但没通过**：`identity_full_sft.py` 把引导扩到 K=6，
+> 每位置独立解 `A_k`；四轮配置（覆盖式 / 加法 / 单 token 抑制 / 近 3 token 抑制）
+> 全部撞 exposure bias，出现周期复读或推不动 ⇒ 最终 `passed=false`。
+> 由此量出**输出层纯引导安全工作区 ≈ 2 步**；并补上旧判据抓不到 A/B/A/B 循环的
+> 漏洞（`token_diversity ≥ 0.55`、`max_bigram_repeat ≤ 2`）。
+> **当前 ACTIVE 仍是 v9.0 的 `identity_alignment.npz`**；
+> `identity_full_sft.npz` 标记 EXPERIMENTAL / NOT ACTIVE。
+> 完整报告 `../output/IDENTITY_CEILING_REPORT.md`，迭代对照
+> `../output/identity_iteration_comparison.json`。
+> 跨过天花板需 `IDENTITY_SFT.md` 的 scheduled-sampling / DAgger，本轮未跑。
+> 全程单进程串行 + OOM 守卫，未 OOM。
+
+---
+
 # TS2SC v9.0 · Apache-2.0 开源发布 + 身份认同微调（门控锁定修复）
 
 > **v9.0 本轮**：`Tuan-0.1-TS2SC-1B` 以 **Apache License 2.0** 公开；

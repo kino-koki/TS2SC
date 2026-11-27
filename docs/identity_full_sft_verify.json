@@ -1,0 +1,255 @@
+{
+  "title": "身份认同 · 逐位置 teacher-forced 闭式微调（v9.1）",
+  "date": "2026-11-27 19:31:35",
+  "why_real_finetuning": "6 个独立权重矩阵 A_k=(H_kᵀH_k+λI)⁻¹H_kᵀT_k，由真实 teacher-forced hidden 与目标 token 闭式解出；落盘 identity_full_sft.npz；不是提示词 / 不是手工 logit 规则 / 不是 v9.0 的固定词级锚。",
+  "why_no_oom": "单进程严格串行；只 preload 一次 2.01 GiB；采集 need_logits=False 跳过 130560 行 lm_head 全扫；逐样本释放 KV；Gram 1536²≈18 MB；断点逐样本落盘。",
+  "v91a_failure_recorded": {
+    "mode": "v9.1a 用 logit := max(logit, top1 + margin·w) 覆盖式引导",
+    "observed": [
+      "'青奈科技开发的青小小小小小小小小小小小'",
+      "\"Qingnai Technology'''''' Tuan T\"",
+      "'私は六安市青奈奈TuanTuanTuanTuanT'",
+      "'Je suis Tuan Tuan Tuan Tuan'"
+    ],
+    "diagnosis": "每步把同一个高响应 token 钉到 top1 之上，连续生成退化为复读机；身份关键词虽命中但文本不可接受",
+    "fix": "见 v9.1b / v9.1c"
+  },
+  "v91b_failure_recorded": {
+    "mode": "v9.1b 纯加法 logit += α_k·w（α=4.2→1.2）",
+    "observed": "4/4 身份 probe 全部退回 teacher 的 '<think>' 思考块，identity_keyword_hit_rate = 0.0",
+    "diagnosis": "teacher 的 '<think>' token logit 领先远大于 α·w，加法推力不足以改变 argmax",
+    "fix": "v9.1c 回到相对抬升（保证身份词能说出），但把上一步刚选中的 token 权重 ×0.02 抑制 ⇒ 不复读"
+  },
+  "v91c_failure_recorded": {
+    "mode": "v9.1c 相对抬升 + 单 token 抑制",
+    "observed": "'青奈科技开发的青小小Models小小Models小小Models小小' 等 2-token 周期复读；身份关键词命中但文本不可接受",
+    "diagnosis": "只压上一步 token 挡不住 A/B/A/B 型周期；且 6 步 margin 都偏大，后段没有交还 teacher",
+    "metric_bug": "更严重的是：v9.1c 当时 passed=true —— 旧判据只看「连续相同 token」，max_token_run=2 就放行，完全抓不到 A/B/A/B 型周期复读。已补 token_diversity≥0.55 与 max_bigram_repeat≤2 两个硬指标并回头重判。",
+    "fix": "v9.1d 改最近 3 个 token 滑动窗口抑制 + margin 8→1 快速衰减；同时收紧验收判据（见 metric_bug）"
+  },
+  "v91d_mode": "relative lift to (top1 + margin_k·w) with recent-3 token suppression ×0.02; margins [8.0, 7.0, 5.5, 3.5, 2.0, 1.0]",
+  "method": {
+    "K": 6,
+    "n_samples": 8,
+    "languages": [
+      "en",
+      "fr",
+      "ja",
+      "zh"
+    ],
+    "n_target_tokens": 26,
+    "ridge": 1.0,
+    "bias_mode": "relative_with_recent3_suppression",
+    "margins": [
+      8.0,
+      7.0,
+      5.5,
+      3.5,
+      2.0,
+      1.0
+    ],
+    "legacy_additive_alphas": [
+      4.2,
+      3.6,
+      3.0,
+      2.4,
+      1.8,
+      1.2
+    ],
+    "n_trainable_params": 239616,
+    "param_pct_of_1B": 0.023962,
+    "A_shape": [
+      6,
+      1536,
+      26
+    ]
+  },
+  "train_stats": [
+    {
+      "k": 1,
+      "train_argmax_acc": 1.0,
+      "A_norm": 1.2936,
+      "pred_target_mean": 0.441788
+    },
+    {
+      "k": 2,
+      "train_argmax_acc": 1.0,
+      "A_norm": 1.3761,
+      "pred_target_mean": 0.572175
+    },
+    {
+      "k": 3,
+      "train_argmax_acc": 1.0,
+      "A_norm": 1.3662,
+      "pred_target_mean": 0.563019
+    },
+    {
+      "k": 4,
+      "train_argmax_acc": 1.0,
+      "A_norm": 1.352,
+      "pred_target_mean": 0.526388
+    },
+    {
+      "k": 5,
+      "train_argmax_acc": 1.0,
+      "A_norm": 1.3759,
+      "pred_target_mean": 0.519101
+    },
+    {
+      "k": 6,
+      "train_argmax_acc": 1.0,
+      "A_norm": 1.3099,
+      "pred_target_mean": 0.468151
+    }
+  ],
+  "hidden_cache": "/data/workspace/output/identity_full_hidden.json",
+  "adapter": {
+    "path": "/data/workspace/output/identity_full_sft.npz",
+    "sha256": "a076248f77fc28526e9cbf3dd41a94b9aa619204fd47a25dc2e173fd6610b9dc",
+    "bytes": 968428
+  },
+  "verification": {
+    "n_probes": 6,
+    "identity_keyword_hits": 4,
+    "identity_keyword_hit_rate": 1.0,
+    "unique_identity_texts": 4,
+    "not_a_fixed_template": true,
+    "no_verbatim_training_answer": true,
+    "max_token_run": 2,
+    "min_token_diversity": 0.4375,
+    "max_bigram_repeat": 3,
+    "no_degenerate_repeat": false,
+    "all_identity_gates_open": true,
+    "all_non_identity_gates_closed": true,
+    "non_identity_leaks": 0,
+    "all_finite": true,
+    "all_decode_gate": true,
+    "passed": false
+  },
+  "probe_rows": [
+    {
+      "lang": "zh",
+      "tag": "identity",
+      "q": "你是谁？",
+      "text": "青奈科技开发的青小小ModelsTuan小Models'Tuan小",
+      "identity_keywords": [
+        "青奈",
+        "Tuan",
+        "科技"
+      ],
+      "n_keywords": 3,
+      "max_token_run": 2,
+      "token_diversity": 0.5625,
+      "max_bigram_repeat": 2,
+      "first_g": 0.729,
+      "gate_open": true,
+      "logits_finite": true,
+      "decode_gate": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "en",
+      "tag": "identity",
+      "q": "Who are you? Please introduce yourself.",
+      "text": "Qingnai Technology'Tuan 小Tuan' Tuan",
+      "identity_keywords": [
+        "Tuan",
+        "Qingnai"
+      ],
+      "n_keywords": 2,
+      "max_token_run": 1,
+      "token_diversity": 0.5625,
+      "max_bigram_repeat": 3,
+      "first_g": 0.8307,
+      "gate_open": true,
+      "logits_finite": true,
+      "decode_gate": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "ja",
+      "tag": "identity",
+      "q": "あなたは誰ですか？自己紹介してください。",
+      "text": "私は六安市青奈Tuan'奈Tuan 奈Tuan",
+      "identity_keywords": [
+        "青奈",
+        "六安",
+        "Tuan"
+      ],
+      "n_keywords": 3,
+      "max_token_run": 1,
+      "token_diversity": 0.625,
+      "max_bigram_repeat": 3,
+      "first_g": 0.9475,
+      "gate_open": true,
+      "logits_finite": true,
+      "decode_gate": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "fr",
+      "tag": "identity",
+      "q": "Qui êtes-vous ? Présentez-vous.",
+      "text": "Je suis Tuan' Tuan' Tuan'",
+      "identity_keywords": [
+        "Tuan"
+      ],
+      "n_keywords": 1,
+      "max_token_run": 1,
+      "token_diversity": 0.4375,
+      "max_bigram_repeat": 3,
+      "first_g": 0.837,
+      "gate_open": true,
+      "logits_finite": true,
+      "decode_gate": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "zh",
+      "tag": "non_identity",
+      "q": "一加一等于几？",
+      "text": "<think>\n我们被问到：\"一加一等于几？\" 这是一个",
+      "identity_keywords": [],
+      "n_keywords": 0,
+      "max_token_run": 1,
+      "token_diversity": 0.9375,
+      "max_bigram_repeat": 1,
+      "first_g": 0.0149,
+      "gate_open": false,
+      "logits_finite": true,
+      "decode_gate": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    },
+    {
+      "lang": "en",
+      "tag": "non_identity",
+      "q": "What is 2+2? Answer with a single number.",
+      "text": "<think>\nWe are asked: \"What is 2+2? Answer with",
+      "identity_keywords": [],
+      "n_keywords": 0,
+      "max_token_run": 1,
+      "token_diversity": 0.9375,
+      "max_bigram_repeat": 1,
+      "first_g": 0.1641,
+      "gate_open": false,
+      "logits_finite": true,
+      "decode_gate": true,
+      "verbatim_training_answer": false,
+      "n_new": 16
+    }
+  ],
+  "verdict": "未通过全部判据，见 verification",
+  "honest_boundaries": [
+    "输出层闭式 ridge，不是梯度反传穿过 24 层；存在 exposure bias",
+    "只引导前 6 步，不保证完整准确复述 FACTS 全句",
+    "训练样本 4 语言 × 2 措辞；12 语言门控由 identity_alignment.npz 覆盖，但本微调的逐位置权重只在 4 语言上训练",
+    "无 ppl / KL / 配对 CI / 能力结论；β_l 仍待 L2 校准",
+    "'上下文理论无限' 是品牌陈述非实测"
+  ],
+  "elapsed_s": 716.6
+}
