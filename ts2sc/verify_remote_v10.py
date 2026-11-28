@@ -66,7 +66,9 @@ def main():
             "calibrate_beta_v10.py", "evidence/gen_deep_checkpoint.json",
             "V10_1_READ_CONTRACT_REPORT.md", "v10_read_contract_audit.py",
             "v10_0_delta_baseline.json", "v10_read_contract_audit.json",
-            "v10_1_bitwise_equivalence.json"]
+            "v10_1_bitwise_equivalence.json",
+            "SWITCH_LAW.md", "capability_registry.json",
+            "v10_switch_law_audit.json", "v10_switch_law_audit.py"]
     for p in need:
         print(f"  {'OK ' if p in sm else 'MISS'} {p}")
     shards = [p for p in sm if p.startswith("weights_v10/student_branch_v10.part")]
@@ -144,6 +146,30 @@ def main():
     # 权重字节未变：分片 git blob sha 仍与上轮一致
     print("  weight shards unchanged (git shas):",
           [sm[p][:10] for p in shards])
+
+    print("\n=== 5d v10.2 开关法则远端核对 ===")
+    sw = json.loads(raw(MODEL, "v10_switch_law_audit.json"))
+    reg = json.loads(raw(MODEL, "capability_registry.json"))
+    sv = sw["verification"]
+    print("  passed", sv["passed"],
+          "| A all_off_zero", sv["A_all_off_bitwise_zero"],
+          "| B default", sv["B_single_off_default_observable"], "/13",
+          "| C activated 13/13", sv["C_single_off_activated_13_of_13"],
+          "| D all_on 27/27", sv["D_all_on_bitwise_identical"])
+    print("  E finite/T1", sv["E_random_all_finite"], sv["E_random_within_T1"],
+          "| F contract inert", sv["F_contract_flags_never_change_forward"],
+          "| G deferred refused", sv["G_deferred_refused"],
+          "| H 24x13", sv["H_24x13_broadcast"])
+    print("  registry", sv["registry_slots_with_switch"], "/",
+          sv["registry_total"], "slots |",
+          sv["forward_runnable"], "FORWARD +",
+          sv["contract_registered"], "CONTRACT +",
+          sv["deferred_not_in_source"], "DEFERRED")
+    rcs2 = raw(MODEL, "sgc_v10.py").decode("utf-8", "replace")
+    print("  remote has CAP_KEYS:", "CAP_KEYS" in rcs2,
+          "| all_off:", "def all_off" in rcs2,
+          "| contract_flags:", "contract_flags" in rcs2,
+          "| deferred_flags:", "deferred_flags" in rcs2)
 
     print("\n=== 6 字节一致（本地 → 远端） ===")
     sys.path.insert(0, "/data/workspace/ts2sc_v8")

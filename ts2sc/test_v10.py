@@ -199,6 +199,43 @@ class TestV10Arch(unittest.TestCase):
                         bad.append((li, j, pos))
         self.assertEqual(bad, [])
 
+    # ---- v10.2 开关法则：开门禁继承，不开就原模型能力 ----
+    def test_19_all_off_is_structural_bitwise_zero(self):
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import v10_switch_law_audit as SL
+        p = SL.fresh_params(False)
+        self.assertTrue(SL.phase_a(p)["passed"])
+        # 全关后强行把 master 拉到 1.0 也不得复活
+        l = SL.make(p, {k: 0.0 for k in A.CAP_KEYS})
+        l.beta = l._scaled_scalar("gate.beta", 1.0)
+        d = SL.delta(l, np.ones(1536, np.float32))
+        self.assertTrue(np.all(d == 0.0))
+
+    def test_20_each_of_13_gates_is_independently_switchable(self):
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import v10_switch_law_audit as SL
+        c = SL.phase_b(SL.fresh_params(True), True)
+        self.assertEqual(c["n_observable"], 13)
+        self.assertTrue(c["all_finite"])
+        b = SL.phase_b(SL.fresh_params(False), False)
+        # 默认初值下 role.Wc 全零，单关不可观测：如实登记，不假装 13/13
+        self.assertEqual([r["gate"] for r in b["rows"]
+                          if not r["observable"]], ["role.Wc"])
+
+    def test_21_all_on_bitwise_and_contract_flags_are_inert(self):
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import v10_switch_law_audit as SL
+        self.assertTrue(SL.phase_d()["all_identical"])
+        self.assertTrue(SL.phase_e(SL.fresh_params(False))["passed"])
+        fgh = SL.phase_fgh()
+        self.assertTrue(fgh["F"]["passed"])   # 契约门不改前向
+        self.assertTrue(fgh["G"]["passed"])   # DEFERRED 拒绝伪造
+        self.assertTrue(fgh["H"]["passed"])   # 24 层 × 13 门广播
+        reg = json.load(open("/data/workspace/output/capability_registry.json",
+                             encoding="utf-8"))
+        self.assertEqual(reg["counts"]["total_slots_with_switch"],
+                         reg["counts"]["total"])
+
 
 if __name__ == "__main__":
     r = unittest.main(verbosity=2, exit=False).result

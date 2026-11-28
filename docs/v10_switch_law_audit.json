@@ -1,0 +1,533 @@
+{
+  "title": "TS2SC v10.2 · 开关法则真跑审计（完全继承的可验证定义）",
+  "date": "2026-11-28 17:45:53",
+  "law": {
+    "formula": "y = T(x) + 1[master] * SUM_f s_f * Delta_f(x)",
+    "master": "gate.beta / set_beta(beta_l)",
+    "all_off": "s_f = 0 for all f  =>  y === T(x) bitwise (structural early-return, not numeric coincidence)",
+    "all_on": "s_f = 1 for all f  =>  bitwise identical to v10.1 (27/27 Delta snapshots)",
+    "per_layer": "24 layers x 13 forward gates, independently switchable",
+    "contract_flags": "9 registered items: switch controls registration/verification only, NEVER enters hook()",
+    "deferred": "2 items: slot exists but NOT_IN_SOURCE, cannot be enabled (no fabrication)"
+  },
+  "counts": {
+    "total": 31,
+    "forward_runnable": 20,
+    "contract_registered": 9,
+    "deferred_not_in_source": 2,
+    "forward_gates": 13,
+    "total_slots_with_switch": 31
+  },
+  "phaseA": {
+    "n": 12,
+    "n_nonzero": 0,
+    "bad": [],
+    "all_bitwise_zero": true,
+    "resurrected_after_set_beta_1": false,
+    "passed": true
+  },
+  "phaseB": {
+    "mode": "DEFAULT_INIT",
+    "n_observable": 12,
+    "n_gates": 13,
+    "rows": [
+      {
+        "gate": "Wdown",
+        "max_abs_diff": 0.38943280279636383,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "Wup",
+        "max_abs_diff": 0.3108297884464264,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "core.Win",
+        "max_abs_diff": 0.4463874399662018,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "core.Wg",
+        "max_abs_diff": 0.1441651126369834,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "core.Wloc",
+        "max_abs_diff": 0.1345404088497162,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "core.feed",
+        "max_abs_diff": 0.17848952114582062,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "sc.Wg",
+        "max_abs_diff": 6.854534149169922e-07,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "sc.Wk",
+        "max_abs_diff": 4.5925378799438477e-05,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "liq.Wg",
+        "max_abs_diff": 0.0030179396271705627,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "bind.C",
+        "max_abs_diff": 0.048392144963145256,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "role.Wc",
+        "max_abs_diff": 0.0,
+        "observable": false,
+        "finite": true
+      },
+      {
+        "gate": "gate.alpha",
+        "max_abs_diff": 0.3108297884464264,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "gate.beta",
+        "max_abs_diff": 0.3108297884464264,
+        "observable": true,
+        "finite": true
+      }
+    ],
+    "all_finite": true,
+    "passed": true
+  },
+  "phaseC": {
+    "mode": "ACTIVATED",
+    "n_observable": 13,
+    "n_gates": 13,
+    "rows": [
+      {
+        "gate": "Wdown",
+        "max_abs_diff": 0.3877321034669876,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "Wup",
+        "max_abs_diff": 0.3099353015422821,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "core.Win",
+        "max_abs_diff": 0.44992849230766296,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "core.Wg",
+        "max_abs_diff": 0.14370525116100907,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "core.Wloc",
+        "max_abs_diff": 0.1332319676876068,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "core.feed",
+        "max_abs_diff": 0.1779072768986225,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "sc.Wg",
+        "max_abs_diff": 6.854534149169922e-07,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "sc.Wk",
+        "max_abs_diff": 4.576146602630615e-05,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "liq.Wg",
+        "max_abs_diff": 0.0030043646693229675,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "bind.C",
+        "max_abs_diff": 0.04819222539663315,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "role.Wc",
+        "max_abs_diff": 0.00908522680401802,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "gate.alpha",
+        "max_abs_diff": 0.3099353015422821,
+        "observable": true,
+        "finite": true
+      },
+      {
+        "gate": "gate.beta",
+        "max_abs_diff": 0.3099353015422821,
+        "observable": true,
+        "finite": true
+      }
+    ],
+    "all_finite": true,
+    "passed": true
+  },
+  "phaseD": {
+    "n": 27,
+    "identical": 27,
+    "mismatched": 0,
+    "bad": [],
+    "all_identical": true
+  },
+  "phaseE": {
+    "n": 32,
+    "all_finite": true,
+    "all_within_T1": true,
+    "zero_combo_strictly_zero": true,
+    "passed": true,
+    "rows": [
+      {
+        "i": 0,
+        "n_zero_gates": 13,
+        "norm": 0.0,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": true
+      },
+      {
+        "i": 1,
+        "n_zero_gates": 0,
+        "norm": 3.8990575229457125,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 2,
+        "n_zero_gates": 3,
+        "norm": 0.0,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 3,
+        "n_zero_gates": 1,
+        "norm": 1.949528763886076,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 4,
+        "n_zero_gates": 4,
+        "norm": 0.0,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 5,
+        "n_zero_gates": 3,
+        "norm": 0.0,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 6,
+        "n_zero_gates": 3,
+        "norm": 1.9495286272886152,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 7,
+        "n_zero_gates": 3,
+        "norm": 0.0,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 8,
+        "n_zero_gates": 3,
+        "norm": 1.9495287695388686,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 9,
+        "n_zero_gates": 4,
+        "norm": 0.0,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 10,
+        "n_zero_gates": 5,
+        "norm": 0.0,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 11,
+        "n_zero_gates": 4,
+        "norm": 0.0,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 12,
+        "n_zero_gates": 2,
+        "norm": 0.0,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 13,
+        "n_zero_gates": 0,
+        "norm": 0.24369109566594738,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 14,
+        "n_zero_gates": 1,
+        "norm": 0.9747643818011914,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 15,
+        "n_zero_gates": 3,
+        "norm": 0.9747643804025513,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 16,
+        "n_zero_gates": 2,
+        "norm": 0.0,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 17,
+        "n_zero_gates": 2,
+        "norm": 0.48738219108774933,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 18,
+        "n_zero_gates": 4,
+        "norm": 0.9747643802262853,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 19,
+        "n_zero_gates": 2,
+        "norm": 1.9495287628352311,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 20,
+        "n_zero_gates": 2,
+        "norm": 3.8990575327452817,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 21,
+        "n_zero_gates": 5,
+        "norm": 0.0,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 22,
+        "n_zero_gates": 3,
+        "norm": 0.0,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 23,
+        "n_zero_gates": 3,
+        "norm": 0.4873821918861232,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 24,
+        "n_zero_gates": 7,
+        "norm": 0.0,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 25,
+        "n_zero_gates": 4,
+        "norm": 1.9495287651198923,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 26,
+        "n_zero_gates": 4,
+        "norm": 0.9747643816109429,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 27,
+        "n_zero_gates": 3,
+        "norm": 1.94952876380125,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 28,
+        "n_zero_gates": 2,
+        "norm": 1.9495287628971683,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 29,
+        "n_zero_gates": 5,
+        "norm": 0.0,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 30,
+        "n_zero_gates": 2,
+        "norm": 1.9495287620638457,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      },
+      {
+        "i": 31,
+        "n_zero_gates": 4,
+        "norm": 0.4873821906498222,
+        "finite": true,
+        "within_T1": true,
+        "all_off_strict_zero": false
+      }
+    ]
+  },
+  "phaseFGH": {
+    "F": {
+      "contract_flags_changed_forward": [],
+      "n_changed": 0,
+      "passed": true
+    },
+    "G": {
+      "deferred": [
+        {
+          "id": "D01_vocabfree_tokenizer_compat",
+          "refused": true
+        },
+        {
+          "id": "D02_vocabfree_to_transformer_bridge",
+          "refused": true
+        }
+      ],
+      "passed": true
+    },
+    "H": {
+      "n_layers": 24,
+      "n_gates": 13,
+      "all_off": true,
+      "all_on": true,
+      "law": "y = T(x) + 1[master] * SUM_f s_f * Delta_f(x); ALL s_f = 0  =>  y === T(x) bitwise",
+      "passed": true
+    }
+  },
+  "verification": {
+    "A_all_off_bitwise_zero": true,
+    "B_single_off_default_observable": 12,
+    "B_all_finite": true,
+    "C_single_off_activated_13_of_13": true,
+    "D_all_on_bitwise_identical": true,
+    "E_random_all_finite": true,
+    "E_random_within_T1": true,
+    "E_zero_combo_strict": true,
+    "F_contract_flags_never_change_forward": true,
+    "G_deferred_refused": true,
+    "H_24x13_broadcast": true,
+    "registry_total": 31,
+    "registry_slots_with_switch": 31,
+    "forward_runnable": 20,
+    "contract_registered": 9,
+    "deferred_not_in_source": 2,
+    "passed": true
+  },
+  "honest_boundaries": [
+    "「完全继承」定义为：31/31 能力都有可切换 slot + 全关逐位回到原模型；不等于 31 项都在前向贡献数值。",
+    "20 FORWARD 项有可差分前向门；9 CONTRACT 项开关只控制登记/校验，phase F 实证切换前后 Δ 逐位相同；2 DEFERRED 项 NOT_IN_SOURCE，置 True 被显式拒绝，不伪造继承。",
+    "role.Wc 在默认初值全零、gate.beta 初值 0.0，单关差分不可观测（phase B 如实登记）；注入非零探针后 13/13 可观测（phase C）——证明开关接线存在，不声称它们当前在贡献。",
+    "全开 27/27 Δ 逐位相同 ⇒ 权重字节、manifest、2 个分片、219/219 全量 COPY 审计、4 语言 10 臂生成、T==C0 端到端零回归全部仍有效，本轮未重跑、未改动任何权重。",
+    "β=1 仍是尺度契约配置，不是 L2 校准成品；calibrate_beta_v10.py 仍 NOT_EXECUTED；P-β 仍 NOT_TESTED。",
+    "端到端 8M 仍 INFEASIBLE（hybrid 保留 teacher 全注意力）；只有分支 O(1) 状态性质成立。",
+    "上游 COMPLETE_BEYOND=False / 2× 对手步数否决随附，不继承超越主张。",
+    "本轮纯 numpy CPU 单元级审计，未拉 2 GiB 权重、未跑 GPU forward、无 ppl / KL / 配对 CI / 新生成样本。"
+  ],
+  "elapsed_s": 0.5
+}

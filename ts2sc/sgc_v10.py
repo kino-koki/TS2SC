@@ -86,6 +86,12 @@ EPS_DEFAULT = 0.10           # T1' scale contract
 SNR_DEFAULT = 1.0            # T2' role bit
 ROLE_SLOTS = 6               # n_slots = d/(2*head_dim) for MiniCPM5-1B
 
+# v10.2 开关法则：每个 NEW 张量一个独立门（与 v10.1 读取契约 13 key 一一对应）。
+# s_f ∈ [0,1]；全 1 ⇒ 数值与 v10.1 逐位相同；全 0 ⇒ Δ 严格零 ⇒ 原模型。
+CAP_KEYS = ("Wdown", "Wup", "core.Win", "core.Wg", "core.Wloc",
+            "core.feed", "sc.Wg", "sc.Wk", "liq.Wg", "bind.C",
+            "role.Wc", "gate.alpha", "gate.beta")
+
 
 def sigmoid(v):
     return 1.0 / (1.0 + np.exp(-np.clip(v, -40, 40)))
@@ -373,24 +379,72 @@ class SGCV10Layer:
         self.d = d
         self.eps = eps
         self.role_snr = role_snr
-        self.Wdown = np.asarray(params["Wdown"], np.float64)     # (DS, d)
-        self.Wup = np.asarray(params["Wup"], np.float64)         # (d, 224)
+        # v10.2 开关法则：13 个独立门，默认全 1.0。
+        # _scaled 在 cap==1.0 时**直接返回原对象、不做任何运算**，
+        # 因此全开态与 v10.1 逐位相同（27/27 Δ 快照可复验）。
+        self.caps = {k: 1.0 for k in CAP_KEYS}
+        self._raw_params = params          # 供开关切换时自洽重建（引用，零拷贝）
+        self.Wdown = np.asarray(self._scaled("Wdown", params["Wdown"]), np.float64)
+        self.Wup = np.asarray(self._scaled("Wup", params["Wup"]), np.float64)
         self.core = FrozenSGCCore(seed=layer_seed + 1,
-                                  Win=params["core.Win"], Wg=params["core.Wg"],
-                                  Wloc=params["core.Wloc"], feed=params["core.feed"])
+                                  Win=self._scaled("core.Win", params["core.Win"]),
+                                  Wg=self._scaled("core.Wg", params["core.Wg"]),
+                                  Wloc=self._scaled("core.Wloc", params["core.Wloc"]),
+                                  feed=self._scaled("core.feed", params["core.feed"]))
         self.sc = ShortConvSidecar(seed=layer_seed + 2,
-                                   Wg=params["sc.Wg"], Wk=params["sc.Wk"])
-        self.liq = LiquidSidecar(seed=layer_seed + 3, Wg=params["liq.Wg"])
+                                   Wg=self._scaled("sc.Wg", params["sc.Wg"]),
+                                   Wk=self._scaled("sc.Wk", params["sc.Wk"]))
+        self.liq = LiquidSidecar(seed=layer_seed + 3,
+                                 Wg=self._scaled("liq.Wg", params["liq.Wg"]))
         self.bind = HadamardBindingSidecar(seed=layer_seed + 4)
-        self.bind.C = np.asarray(params["bind.C"], np.float64)    # 确定性码本
-        self.role_Wc = np.asarray(params["role.Wc"], np.float64)   # (3, d) T2'
-        self.alpha = float(np.asarray(params["gate.alpha"]).reshape(-1)[0])
+        self.bind.C = np.asarray(self._scaled("bind.C", params["bind.C"]), np.float64)
+        self.role_Wc = np.asarray(self._scaled("role.Wc", params["role.Wc"]), np.float64)
+        self.alpha = float(self._scaled_scalar(
+            "gate.alpha", float(np.asarray(params["gate.alpha"]).reshape(-1)[0])))
         self.enabled = True
         # v10.1 读取契约修正：逐层 β 初值来自 checkpoint 的 gate.beta，
         # 不再硬编码 0.0。L2 校准产出的 beta_l.json 写回该槽位即可生效；
         # set_beta(β) 仍可覆盖（交付默认 1.0）。初值 0.0 ⇒ 数值中性。
-        self.beta = float(np.asarray(params["gate.beta"]).reshape(-1)[0])
+        # v10.2：该初值同样受 gate.beta 门控。
+        self.beta = self._scaled_scalar(
+            "gate.beta", float(np.asarray(params["gate.beta"]).reshape(-1)[0]))
         self.beta_at_init = self.beta
+
+    def _scaled(self, key, arr):
+        """cap==1.0 ⇒ 原对象（零运算、逐位不变）；否则按门缩放。"""
+        c = self.caps[key]
+        return arr if c == 1.0 else np.asarray(arr) * c
+
+    def _scaled_scalar(self, key, v):
+        c = self.caps[key]
+        return v if c == 1.0 else v * c
+
+    def set_capabilities(self, caps: dict, params: dict = None):
+        """切换开关：更新门后按新 cap 重建（缺省用构造时的原始 params）。"""
+        for k, v in caps.items():
+            if k not in self.caps:
+                raise KeyError(f"unknown capability gate: {k}")
+            self.caps[k] = float(v)
+        self._rebuild(params if params is not None else self._raw_params)
+
+    def _rebuild(self, params):
+        """门变化后按新 cap 重建（只在显式切换时调用，不影响默认路径）。"""
+        self.Wdown = np.asarray(self._scaled("Wdown", params["Wdown"]), np.float64)
+        self.Wup = np.asarray(self._scaled("Wup", params["Wup"]), np.float64)
+        self.core.Win = np.asarray(self._scaled("core.Win", params["core.Win"]), np.float64)
+        self.core.Wg = np.asarray(self._scaled("core.Wg", params["core.Wg"]), np.float64)
+        self.core.Wloc = np.asarray(self._scaled("core.Wloc", params["core.Wloc"]), np.float64)
+        self.core.feed = np.asarray(self._scaled("core.feed", params["core.feed"]), np.float64)
+        self.sc.Wg = np.asarray(self._scaled("sc.Wg", params["sc.Wg"]), np.float64)
+        self.sc.Wk = np.asarray(self._scaled("sc.Wk", params["sc.Wk"]), np.float64)
+        self.liq.Wg = np.asarray(self._scaled("liq.Wg", params["liq.Wg"]), np.float64)
+        self.bind.C = np.asarray(self._scaled("bind.C", params["bind.C"]), np.float64)
+        self.role_Wc = np.asarray(self._scaled("role.Wc", params["role.Wc"]), np.float64)
+        self.alpha = float(self._scaled_scalar(
+            "gate.alpha", float(np.asarray(params["gate.alpha"]).reshape(-1)[0])))
+        raw_beta = float(np.asarray(params["gate.beta"]).reshape(-1)[0])
+        self.beta = self._scaled_scalar("gate.beta", raw_beta)
+        self.reset()
 
     def reset(self):
         self.core.loc_buf[:] = 0.0
@@ -407,8 +461,11 @@ class SGCV10Layer:
         self.bind.writes = 0
 
     def hook(self, x, pos):
-        """返回加性 Δ；β=0 时严格返回零向量（逐位不变）。"""
-        if not self.enabled or self.beta <= 0.0:
+        """返回加性 Δ；开关法则：全关或 β=0 时严格返回零向量（逐位不变）。"""
+        # v10.2：全关态走与 β=0 完全相同的 early-return，
+        # 使「不开就原模型」成为结构性保证，而不是靠数值恰好为 0 撞出来。
+        if (not self.enabled or self.beta <= 0.0
+                or all(c == 0.0 for c in self.caps.values())):
             return np.zeros_like(x)
         xf = np.asarray(x, np.float64)
         rx = float(np.linalg.norm(xf))
@@ -467,11 +524,89 @@ class SGCV10Branch:
                                    eps=eps, role_snr=role_snr)
                        for i in range(self.nl)]
         self.beta = 0.0
+        # v10.2 契约层开关：这些是理论前提 / 工程契约 / 声明边界，
+        # 开关只控制「是否登记与校验」，**绝不进入 hook、不改前向数值**。
+        # 这样每一项能力都有 slot，但不谎报成「在前向贡献」。
+        self.contract_flags = {
+            "C01_input_side_bit_budget": True,
+            "C02_H6_A4_normalized_interface": True,
+            "C03_gated_consolidation_Twb": True,
+            "C04_withdrawal_registry": True,
+            "C05_L0_L4_gates": True,
+            "C06_paired_on_off_protocol": True,
+            "C07_no_LM_capability_claim": True,
+            "C08_upstream_COMPLETE_BEYOND_False": True,
+            "C09_8M_branch_property_not_end2end": True,
+        }
+        # 用户确认未推送、下载源码中核实不存在：给 slot 但不可置 True。
+        self.deferred_flags = {
+            "D01_vocabfree_tokenizer_compat": False,
+            "D02_vocabfree_to_transformer_bridge": False,
+        }
+
+    def set_contract(self, cid: str, on: bool):
+        if cid in self.contract_flags:
+            self.contract_flags[cid] = bool(on)
+        elif cid in self.deferred_flags:
+            if on:
+                raise RuntimeError(
+                    f"{cid} is DEFERRED / NOT_IN_SOURCE (user confirmed not "
+                    f"pushed); refusing to fabricate inheritance")
+            self.deferred_flags[cid] = False
+        else:
+            raise KeyError(f"unknown contract id: {cid}")
+
+    def contract_state(self):
+        return dict(contracts=self.contract_flags,
+                    deferred=self.deferred_flags,
+                    note="contract flags never enter hook(); switching them "
+                         "cannot change any forward value")
 
     def set_beta(self, beta: float):
         self.beta = float(beta)
         for l in self.layers:
-            l.beta = float(beta)
+            # 受该层 gate.beta 门控：全关态即使 set_beta(1.0) 也不复活。
+            l.beta = l._scaled_scalar("gate.beta", float(beta))
+
+    def set_capabilities(self, caps: dict, params_by_layer: dict = None):
+        """开关法则入口：把门广播到 24 层（缺省各层用自身原始 params 重建）。"""
+        for i, l in enumerate(self.layers):
+            p = params_by_layer[i] if params_by_layer is not None else None
+            l.set_capabilities(caps, p)
+
+    def all_off(self, params_by_layer: dict = None):
+        self.set_capabilities({k: 0.0 for k in CAP_KEYS}, params_by_layer)
+        self.set_beta(self.beta)          # 同步 master，全关态不复活
+
+    def all_on(self, params_by_layer: dict = None):
+        self.set_capabilities({k: 1.0 for k in CAP_KEYS}, params_by_layer)
+        self.set_beta(self.beta)
+
+    def capability_state(self):
+        """返回 24 层 × 13 门的当前状态（机器可读，不是声明）。"""
+        return dict(
+            law="y = T(x) + 1[master] * SUM_f s_f * Delta_f(x); "
+                "ALL s_f = 0  =>  y === T(x) bitwise",
+            n_layers=len(self.layers),
+            n_gates=len(CAP_KEYS),
+            gates=list(CAP_KEYS),
+            per_layer=[{k: float(l.caps[k]) for k in CAP_KEYS}
+                       for l in self.layers],
+            all_off=all(all(c == 0.0 for c in l.caps.values())
+                        for l in self.layers),
+            all_on=all(all(c == 1.0 for c in l.caps.values())
+                       for l in self.layers))
+
+    def verified_capabilities(self) -> dict:
+        """三态归类：真实可差分前向门 / 中性初值校准槽 / 契约门（不改前向）。"""
+        return dict(
+            forward_gates=tuple(CAP_KEYS[:10]),
+            neutral_init_slots=("role.Wc", "gate.alpha"),
+            persisted_master=("gate.beta",),
+            note="ALL 13 gates exist and are wired; neutral-init slots are "
+                 "numerically 0/1 at default and only become observable after "
+                 "L2 calibration. Contract-level capabilities live in "
+                 "capability_registry.json and do NOT alter forward values.")
 
     def reset(self):
         for l in self.layers:
