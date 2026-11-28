@@ -12,11 +12,22 @@ T = os.environ["GH_TOKEN"]
 OWNER, MODEL, SRC = "kino-koki", "MiniCPM5-1B-TS2SC", "TS2SC"
 
 
+def _open(req, timeout=60, tries=5):
+    last = None
+    for k in range(tries):
+        try:
+            return urllib.request.urlopen(req, timeout=timeout)
+        except Exception as e:                 # 间歇 DNS/CDN 抖动
+            last = e
+            __import__("time").sleep(1.5 * (k + 1))
+    raise RuntimeError(f"network failed after {tries}: {last}")
+
+
 def api(p):
     r = urllib.request.Request("https://api.github.com" + p, headers={
         "Authorization": "Bearer " + T,
         "Accept": "application/vnd.github+json", "User-Agent": "TS2SC-v10"})
-    with urllib.request.urlopen(r, timeout=60) as x:
+    with _open(r, timeout=60) as x:
         return json.load(x)
 
 
@@ -26,7 +37,7 @@ def raw(repo, path):
     r = urllib.request.Request(u, headers={
         "Authorization": "Bearer " + T,
         "Accept": "application/vnd.github.raw", "User-Agent": "TS2SC-v10"})
-    return urllib.request.urlopen(r, timeout=60).read()
+    return _open(r, timeout=60).read()
 
 
 def gitsha(b):
