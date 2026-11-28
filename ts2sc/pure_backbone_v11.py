@@ -208,9 +208,19 @@ class PureBackboneLM:
         self.vocab = cfg["vocab_size"]
         self.eps = cfg.get("rms_norm_eps", 1e-6)
         rng = np.random.default_rng(seed)
-        self.embed = rng.normal(0, 0.02, (self.vocab, self.d)).astype(np.float32)
-        self.lm_head = rng.normal(0, 0.02 / math.sqrt(self.d),
-                                  (self.vocab, self.d)).astype(np.float32)
+        # 原始 `rng.normal(0,s,(V,d)).astype(f32)` 会先产生 1.6 GiB float64
+        # 临时数组，两张表峰值 ~4.8 GiB ⇒ 3.6 GiB 可用内存下边界 OOM（回归 137）。
+        # 分块生成：每次只产生 8192×d×8 = 100 MiB float64 临时，且 Generator
+        # 状态连续，随机序列与一次大调用**逐位相同** ⇒ 既有 sha256 / Δ 证据不废。
+        def _big_normal(scale, chunk=2048):
+            a = np.empty((self.vocab, self.d), np.float32)
+            for i in range(0, self.vocab, chunk):
+                j = min(i + chunk, self.vocab)
+                a[i:j] = (rng.normal(0, scale, (j - i, self.d))
+                          .astype(np.float32))
+            return a
+        self.embed = _big_normal(0.02)
+        self.lm_head = _big_normal(0.02 / math.sqrt(self.d))
         self.norm = np.ones(self.d, np.float32)
         self.layers = [PureLayer(self.d, self.h, seed + 101 * i)
                        for i in range(self.nl)]
