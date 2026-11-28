@@ -1,0 +1,10 @@
+{
+  "title": "v10.1 vs v10.0 Δ bitwise equivalence",
+  "date": "2026-11-28 17:24:11",
+  "n": 27,
+  "identical": 27,
+  "mismatched": 0,
+  "bad": [],
+  "all_identical": true,
+  "meaning": "read-contract fix is numerically neutral: all prior generation evidence remains valid without re-run"
+}

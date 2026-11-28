@@ -386,7 +386,11 @@ class SGCV10Layer:
         self.role_Wc = np.asarray(params["role.Wc"], np.float64)   # (3, d) T2'
         self.alpha = float(np.asarray(params["gate.alpha"]).reshape(-1)[0])
         self.enabled = True
-        self.beta = 0.0
+        # v10.1 读取契约修正：逐层 β 初值来自 checkpoint 的 gate.beta，
+        # 不再硬编码 0.0。L2 校准产出的 beta_l.json 写回该槽位即可生效；
+        # set_beta(β) 仍可覆盖（交付默认 1.0）。初值 0.0 ⇒ 数值中性。
+        self.beta = float(np.asarray(params["gate.beta"]).reshape(-1)[0])
+        self.beta_at_init = self.beta
 
     def reset(self):
         self.core.loc_buf[:] = 0.0
@@ -416,6 +420,11 @@ class SGCV10Layer:
         e = np.zeros(self.core.D)
         # 把 role one-hot 广播到前 ROLE_SLOTS 维（尺度不变）
         e[r] = self.role_snr
+        # v10.1 读取契约修正：role.Wc 作为「可校准 role 增益」真正进入前向。
+        # 形状 (3, d)，取第 r%3 行与 x 的内积并归一化；初值全零 ⇒ 贡献严格 0，
+        # 数值与 v10.0 逐位相同。L2 校准后可承载输入侧 role bit 的增益项。
+        role_gain = float(self.role_Wc[r % self.role_Wc.shape[0]] @ xf) / math.sqrt(self.d)
+        e += role_gain
         hn = h / (np.linalg.norm(h) + 1e-12)
         h_role = hn + e
         sgc_out = self.core.step(h_role)
@@ -426,10 +435,13 @@ class SGCV10Layer:
         cat = np.concatenate([sgc_out, fA, fB, fC])      # (64+64+64+32=224,)
         o = self.Wup @ cat
         ro = float(np.linalg.norm(o))
-        delta = self.beta * self.eps * rx * (o / (ro + 1e-12))
+        # v10.1 读取契约修正：gate.alpha 作为可校准层增益真正进入前向。
+        # 初值 1.0 ⇒ 数值与 v10.0 逐位相同；L2 校准后可逐层缩放。
+        gain = self.alpha * self.beta
+        delta = gain * self.eps * rx * (o / (ro + 1e-12))
         # 硬契约（防御性，T1' 数学上已保证）
         nd = float(np.linalg.norm(delta))
-        bound = self.beta * self.eps * rx
+        bound = gain * self.eps * rx
         if nd > bound * (1.0 + 1e-9):
             delta *= bound / (nd + 1e-12)
         return delta.astype(np.float32)
@@ -472,8 +484,27 @@ class SGCV10Branch:
         return sum(l.state_bytes() for l in self.layers)
 
     def read_keys(self):
-        """F21 等价：每层 NEW 参数都在前向路径被读取。"""
+        """声明的 NEW 参数键数（**不是**读取证据）。
+
+        v10.1 修正：此前本方法被当作「312 都在前向路径」的证据，但扰动
+        审计（v10_read_contract_audit.py）实测 v10.0 只有 10/13 生效，
+        72/312 空挂。真实读取契约以 verified_read_keys() 与审计脚本为准。
+        """
         return len(self.layers) * len(self.NEW_KEYS)
+
+    def verified_read_keys(self) -> dict:
+        """逐层静态读取契约：13 个 key 各自的归属，不谎报。"""
+        return dict(
+            n_layers=len(self.layers),
+            n_keys_per_layer=len(self.NEW_KEYS),
+            forward_active=("Wdown", "Wup", "core.Win", "core.Wg",
+                            "core.Wloc", "core.feed", "sc.Wg", "sc.Wk",
+                            "liq.Wg", "bind.C"),
+            forward_neutral_init=("role.Wc", "gate.alpha"),
+            persisted_init=("gate.beta",),
+            note="forward_neutral_init 的参数已进前向但初值中性(0/1)，"
+                 "不声称在贡献；persisted_init 在构造期读取、由 set_beta 覆盖。"
+                 "逐 key 扰动复验见 v10_read_contract_audit.py")
 
 
 # ---------------------------------------------------------------------------

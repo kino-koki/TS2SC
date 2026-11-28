@@ -46,6 +46,7 @@ v11 只看 delta 的 A2 判据 → 加「赢所在 L 上 S 的 bpc 劣化 ≤ +1
 | **P-β0** | β=0 与纯 teacher 端到端逐 token 相同 | `VERIFIED`（本轮深审） | 任一 token 不同即证伪 | 4 语言中 zh/en 双跑 T vs C0 |
 | **P-quality** | v10 的 6-token 生成可读 ⇒ 质量/能力不降 | `NOT_TESTED` | 短生成全落在 `<think>` 或答错即不能升级为质量主张 | ppl / 下游集 / 配对 Wilson CI（**纯 CPU 不做**） |
 | **P-identity** | 身份层退役后模型「原生级 / 能力更强」 | `NOT_CLAIMABLE` | 任何此类句子都需 GPU LoRA SFT + 配对 CI；CPU 输出层微调已知几乎只有污染 | 用户目标机自跑 |
+| **P-read** | 312 个 NEW 张量全部进前向 / 有归属，零空挂 | `VERIFIED`（v10.1） | 任一 key 扰动后 Δ 不变且构造期也未读取即证伪 | 已 `test_v10.py::test_16/17`，见 `V10_1_READ_CONTRACT_REPORT.md` |
 
 ---
 
@@ -62,6 +63,21 @@ v11 只看 delta 的 A2 判据 → 加「赢所在 L 上 S 的 bpc 劣化 ≤ +1
   `evidence/gen_deep_checkpoint.json`。
 - 因此也永远不会写「四语言生成文本必然互不相同」。
 
+## 1c. 一处自身声明错误，已纠正（不抹平）
+
+v10.0 的 `read_keys()` 返回 `24×13=312` 并被当作「全部进前向」的证据；
+扰动审计实测 **10/13 ACTIVE、72/312 空挂**（`role.Wc` / `gate.alpha` /
+`gate.beta`），与 V7「空挂」同构。
+
+v10.1 把三者以**中性初值**接入（0 / 1.0 / 0.0），
+`27/27` 个 Δ 快照逐位相同 ⇒ 权重字节、manifest、分片、全部既有生成证据
+**一个没动、全部仍有效**。现在 12 ACTIVE + 1 PERSISTED_INIT、
+`NOT_CONTRIBUTING=0`，由 `test_16/17/18` 钉死。
+
+**这不等于「3 个参数已在贡献」**：中性初值只是消除空挂并变成 L2 可校准
+槽位。`gate.beta` 现在才真正成为 `beta_l.json` 的写回落点；`P-β` 仍
+`NOT_TESTED`。详见 `V10_1_READ_CONTRACT_REPORT.md`。
+
 ## 2. 永远不许写的句子（红线）
 
 - ❌ 「v10 超越 / SOTA / 严格优于 Transformer / Mamba2」
@@ -72,6 +88,7 @@ v11 只看 delta 的 A2 判据 → 加「赢所在 L 上 S 的 bpc 劣化 ≤ +1
 - ❌ 「无知识污染 = 能力不变」——口径只到权重逐位 + 生成零身份标记
 - ❌ 「等于上游 PyTorch 源码执行」——TS2SC 是纯 numpy CPU 等价实现
 - ❌ 「四语言生成文本必然互不相同」——实测 3/4，见 §1b
+- ❌ 「312 个 NEW 张量全部在前向贡献」——其中 3 个是中性初值的校准槽位，见 §1c
 
 **允许写**：`β=0 逐位零回归`、`219/219 COPY 全量逐位一致`、
 `FFT↔IIR 1.69e−14`、`O(1) 定态`、`P7 主干不回写`、

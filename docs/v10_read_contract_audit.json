@@ -1,0 +1,160 @@
+{
+  "title": "v10.1 · 312 NEW 张量读取契约审计（扰动 + 持久化双判据）",
+  "date": "2026-11-28 17:24:11",
+  "method": "perturb one key, rebuild same-seed layer, compare Δ bitwise; plus gate.beta construction-time persistence probe",
+  "d": 1536,
+  "beta": 1.0,
+  "n_keys": 13,
+  "n_active": 12,
+  "n_persisted_init": 1,
+  "n_not_contributing": 0,
+  "total_not_contributing_24_layers": 0,
+  "all_keys_accounted_for": true,
+  "declared_read_keys_before": 312,
+  "honest_note": "forward-active with NEUTRAL initial value (role.Wc=0, gate.alpha=1) is NOT claimed as contributing; it is a calibratable slot for L2. gate.beta is read at init and overridden by set_beta(1.0) at delivery.",
+  "rows": [
+    {
+      "key": "Wdown",
+      "shape": [
+        64,
+        1536
+      ],
+      "init_all_zero": false,
+      "max_abs_delta_after_perturb": 0.3839167505502701,
+      "active": true,
+      "status": "ACTIVE"
+    },
+    {
+      "key": "Wup",
+      "shape": [
+        1536,
+        224
+      ],
+      "init_all_zero": false,
+      "max_abs_delta_after_perturb": 0.2932879962027073,
+      "active": true,
+      "status": "ACTIVE"
+    },
+    {
+      "key": "core.Win",
+      "shape": [
+        64,
+        64
+      ],
+      "init_all_zero": false,
+      "max_abs_delta_after_perturb": 0.2535848394036293,
+      "active": true,
+      "status": "ACTIVE"
+    },
+    {
+      "key": "core.Wg",
+      "shape": [
+        64,
+        64
+      ],
+      "init_all_zero": false,
+      "max_abs_delta_after_perturb": 0.08441339433193207,
+      "active": true,
+      "status": "ACTIVE"
+    },
+    {
+      "key": "core.Wloc",
+      "shape": [
+        64,
+        3
+      ],
+      "init_all_zero": false,
+      "max_abs_delta_after_perturb": 0.035852063447237015,
+      "active": true,
+      "status": "ACTIVE"
+    },
+    {
+      "key": "core.feed",
+      "shape": [
+        64
+      ],
+      "init_all_zero": false,
+      "max_abs_delta_after_perturb": 0.031150221824645996,
+      "active": true,
+      "status": "ACTIVE"
+    },
+    {
+      "key": "sc.Wg",
+      "shape": [
+        3,
+        64,
+        64
+      ],
+      "init_all_zero": false,
+      "max_abs_delta_after_perturb": 8.791685104370117e-07,
+      "active": true,
+      "status": "ACTIVE"
+    },
+    {
+      "key": "sc.Wk",
+      "shape": [
+        3,
+        64,
+        7
+      ],
+      "init_all_zero": false,
+      "max_abs_delta_after_perturb": 5.088001489639282e-05,
+      "active": true,
+      "status": "ACTIVE"
+    },
+    {
+      "key": "liq.Wg",
+      "shape": [
+        64,
+        64
+      ],
+      "init_all_zero": false,
+      "max_abs_delta_after_perturb": 0.004003953188657761,
+      "active": true,
+      "status": "ACTIVE"
+    },
+    {
+      "key": "bind.C",
+      "shape": [
+        64,
+        64
+      ],
+      "init_all_zero": false,
+      "max_abs_delta_after_perturb": 0.21186136826872826,
+      "active": true,
+      "status": "ACTIVE"
+    },
+    {
+      "key": "role.Wc",
+      "shape": [
+        3,
+        1536
+      ],
+      "init_all_zero": true,
+      "max_abs_delta_after_perturb": 0.27371180802583694,
+      "active": true,
+      "status": "ACTIVE"
+    },
+    {
+      "key": "gate.alpha",
+      "shape": [
+        1
+      ],
+      "init_all_zero": false,
+      "max_abs_delta_after_perturb": 0.34968864917755127,
+      "active": true,
+      "status": "ACTIVE"
+    },
+    {
+      "key": "gate.beta",
+      "shape": [
+        1
+      ],
+      "init_all_zero": true,
+      "max_abs_delta_after_perturb": 0.0,
+      "active": false,
+      "status": "PERSISTED_INIT",
+      "persisted_init_read": true
+    }
+  ]
+}

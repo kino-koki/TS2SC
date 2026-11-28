@@ -63,7 +63,10 @@ def main():
             "test_v10.py", "v10_copy_full_audit.json",
             "v10_multilingual_verify.json", "V10_DEEP_AUDIT_REPORT.md",
             "TS2SC_V10_FALSIFIABLE_LEDGER.md", "v10_deep_audit.py",
-            "calibrate_beta_v10.py", "evidence/gen_deep_checkpoint.json"]
+            "calibrate_beta_v10.py", "evidence/gen_deep_checkpoint.json",
+            "V10_1_READ_CONTRACT_REPORT.md", "v10_read_contract_audit.py",
+            "v10_0_delta_baseline.json", "v10_read_contract_audit.json",
+            "v10_1_bitwise_equivalence.json"]
     for p in need:
         print(f"  {'OK ' if p in sm else 'MISS'} {p}")
     shards = [p for p in sm if p.startswith("weights_v10/student_branch_v10.part")]
@@ -125,6 +128,22 @@ def main():
     cal = raw(MODEL, "calibrate_beta_v10.py").decode("utf-8", "replace")
     print("  calibration skeleton NOT_EXECUTED:",
           "NOT_EXECUTED" in cal and "--execute" in cal)
+
+    print("\n=== 5c v10.1 读取契约远端核对 ===")
+    rc = json.loads(raw(MODEL, "v10_read_contract_audit.json"))
+    eq = json.loads(raw(MODEL, "v10_1_bitwise_equivalence.json"))
+    print("  ACTIVE", rc["n_active"], "/ PERSISTED_INIT", rc["n_persisted_init"],
+          "/ NOT_CONTRIBUTING", rc["n_not_contributing"],
+          "| all_accounted", rc["all_keys_accounted_for"])
+    print("  v10.1 vs v10.0 Δ", eq["identical"], "/", eq["n"],
+          "| all_identical", eq["all_identical"])
+    rcs = raw(MODEL, "sgc_v10.py").decode("utf-8", "replace")
+    print("  remote sgc_v10 has beta_at_init:",
+          "beta_at_init" in rcs,
+          "| has verified_read_keys:", "verified_read_keys" in rcs)
+    # 权重字节未变：分片 git blob sha 仍与上轮一致
+    print("  weight shards unchanged (git shas):",
+          [sm[p][:10] for p in shards])
 
     print("\n=== 6 字节一致（本地 → 远端） ===")
     sys.path.insert(0, "/data/workspace/ts2sc_v8")

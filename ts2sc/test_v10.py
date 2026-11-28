@@ -3,6 +3,7 @@
 """TS2SC v10 独立回归：上游 SGC 外挂同步后的全部不变量（纯 numpy，秒级）。"""
 from __future__ import annotations
 
+import json
 import os
 import sys
 import unittest
@@ -130,6 +131,73 @@ class TestV10Arch(unittest.TestCase):
         self.assertTrue(np.all(b["rho"] < 1))
         self.assertTrue(np.all(np.abs(b["b"] + b["rho"] ** 2) < 1e-15))
         self.assertTrue(np.all(np.isfinite(b["a"])))
+
+    # ---- v10.1 读取契约：钉死「312 个 NEW 张量不得空挂」 ----
+    def test_16_every_new_key_affects_forward_or_is_persisted(self):
+        """扰动判据：每个 NEW key 必须 ACTIVE 或 PERSISTED_INIT，零空挂。
+
+        v10.0 实测 10/13 ACTIVE、72/312 空挂（role.Wc / gate.alpha /
+        gate.beta）；v10.1 修正后 12 ACTIVE + 1 PERSISTED_INIT。
+        """
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import v10_read_contract_audit as RC
+        p0 = A.deterministic_layer_params(1536, RC.SEED)
+        x = np.random.default_rng(4242).normal(0, 1, 1536).astype(np.float32)
+        d0 = RC.delta_of(p0, x)
+        bad = []
+        for key in [k for k, _, _ in A.TENSOR_SPECS]:
+            if key == "gate.beta":
+                continue                     # 单独用持久化判据
+            q = RC.perturb(p0, key, np.random.default_rng(99))
+            diff = float(np.max(np.abs(
+                RC.delta_of(q, x).astype(np.float64)
+                - d0.astype(np.float64))))
+            if diff <= 0.0:
+                bad.append(key)
+        self.assertEqual(bad, [], f"empty-hanging NEW keys: {bad}")
+        # gate.beta 必须在构造期被读取
+        pb = {k: np.array(v, np.float32, copy=True) for k, v in p0.items()}
+        pb["gate.beta"] = np.array([0.77], np.float32)
+        lay = A.SGCV10Layer(1536, 1, pb)
+        self.assertAlmostEqual(lay.beta, 0.77, places=6)
+
+    def test_17_read_contract_does_not_lie(self):
+        """read_keys 是声明；verified_read_keys 必须把所有 key 归类。"""
+        cfg = dict(hidden_size=1536, num_hidden_layers=24)
+        p = {i: A.deterministic_layer_params(1536, 7) for i in range(24)}
+        br = A.SGCV10Branch(cfg, p)
+        v = br.verified_read_keys()
+        all_keys = (set(v["forward_active"])
+                    | set(v["forward_neutral_init"])
+                    | set(v["persisted_init"]))
+        self.assertEqual(all_keys, set(A.SGCV10Branch.NEW_KEYS))
+        self.assertEqual(len(all_keys), 13)
+        self.assertEqual(br.read_keys(), 24 * 13)   # 声明数，不是证据
+
+    def test_18_v10_1_fix_is_bitwise_neutral(self):
+        """v10.1 读取契约修正不得改变任何 Δ（否则旧生成证据作废）。"""
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import v10_read_contract_audit as RC
+        base = json.load(open("/data/workspace/output/v10_0_delta_baseline.json",
+                             encoding="utf-8"))
+        rng = np.random.default_rng(31337)
+        bad = []
+        for li in (0, 7, 23):
+            p = A.deterministic_layer_params(1536, 20261128 + 101 * li)
+            for j, mag in enumerate((1e-3, 1.0, 1e3)):
+                x = (rng.normal(0, 1, 1536) * mag).astype(np.float32)
+                lay = A.SGCV10Layer(1536, 1000 + 17 * li, p)
+                lay.beta = RC.BETA
+                for pos in (0, 1, 5):
+                    lay.reset()
+                    sha = RC.fingerprint(
+                        np.asarray(lay.hook(x, pos), np.float32))
+                    want = next(r["sha256"] for r in base["rows"]
+                                if r["layer"] == li and r["case"] == j
+                                and r["pos"] == pos)
+                    if sha != want:
+                        bad.append((li, j, pos))
+        self.assertEqual(bad, [])
 
 
 if __name__ == "__main__":
