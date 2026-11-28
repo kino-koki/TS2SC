@@ -209,5 +209,5 @@
   "header_tensors": 219,
   "data_start_offset": 25248,
   "clean_definition": "every byte re-downloaded from upstream and matched against LIVE git blob sha1; no local cache or prior artifact was read",
-  "elapsed_s": 278.8
+  "elapsed_s": 274.7
 }

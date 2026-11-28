@@ -48,6 +48,8 @@ v11 只看 delta 的 A2 判据 → 加「赢所在 L 上 S 的 bpc 劣化 ≤ +1
 | **P-identity** | 身份层退役后模型「原生级 / 能力更强」 | `NOT_CLAIMABLE` | 任何此类句子都需 GPU LoRA SFT + 配对 CI；CPU 输出层微调已知几乎只有污染 | 用户目标机自跑 |
 | **P-read** | 312 个 NEW 张量全部进前向 / 有归属，零空挂 | `VERIFIED`（v10.1） | 任一 key 扰动后 Δ 不变且构造期也未读取即证伪 | 已 `test_v10.py::test_16/17`，见 `V10_1_READ_CONTRACT_REPORT.md` |
 | **P-switch** | 31/31 能力都有可切换 slot，且全关逐位 ≡ 原模型 | `VERIFIED`（v10.2） | 全关 Δ 非零、或某门无法独立差分、或契约门改变前向、或 DEFERRED 可置 True 即证伪 | 已 `test_v10.py::test_19/20/21`，见 `SWITCH_LAW.md` |
+| **P-scope** | 交付只继承 SGC_CORE + SIDECARS + SMM 三组，且 SMM 真的被门禁写入（非空挂） | `VERIFIED`（v10.3） | `observe()` 后 commits=0 / 读回不命中 / 全开与 smm_off 无差异即证伪 | 已 `test_v10_3.py::test_04/05/06/07`，见 `V10_3_SCOPED_DELIVERY.md` |
+| **P-10M** | 配置开到 10M 且分支状态 O(1) 恒定；端到端仍不可行 | `PARTIAL`（v10.3） | 分支状态随 L 增长、或闭式 ≠ 逐步 gate=0 即证伪分支侧；teacher 侧 240 GiB KV 账本判定不可行 | 已 `test_v10_3.py::test_09/10`，见 §1e |
 
 ---
 
@@ -94,6 +96,29 @@ v10.1 把三者以**中性初值**接入（0 / 1.0 / 0.0），
 **这条定义不覆盖**：31 项都在前向贡献数值、定理在 LM 上复现、
 能力变强、无词表设计已继承。四者都不成立，见 §2 红线。
 
+## 1e. v10.3 范围收窄 + 10M（用户指令）
+
+> 「就继承 SGC 以及其外挂模块 SMM记忆与自进化模块就行了，上下文开到10M」
+
+**本次交付只继承三组**：G1 SGC_CORE、G2 三条 SIDECARS、G3 SMM。
+SMM 来自上游真实源码 `evolution_mixer.py` 的 `FusedEvolutionMixer` /
+`CalibratedFusedMixer`（零阶巩固：τ 证据 / dominance / cooldown /
+读回拒绝 / capacity 淘汰 / `rho_mem`）。历史 31 项注册表、9 CONTRACT、
+2 DEFERRED **原样保留不删除**，只是排除在本次继承声明之外。
+
+**两处自查修正**（不抹平）：
+1. SMM 初值全零 + 散共现被门禁全拒 ⇒ 全开与 `smm_off` 的 ‖Δ‖ 相同，
+   差点又是「空挂」。改结构化强共现后 16 commits / 1278 rejects /
+   读回 `key_value=5` 命中 ⇒ 记忆真写入可读。
+2. SGC 与 SMM 各自归一化到 `βε‖x‖`，相加可到 2× ⇒ 对**总和**统一
+   投影；`smm_off` 零缩放保持与 v10.2 逐位相同。
+
+**10M 分层**：`max_position_embeddings = 10,485,760`（配置值）；
+分支侧 `advance_idle(10M)` 是 **O(1) 闭式实跑**，状态恒定
+3,675,648 B、闭式 == 逐步 gate=0；teacher 全注意力 **240 GiB KV**
++ **80× RoPE 外推** ⇒ `INFEASIBLE_LEDGER`（账本判定，非实跑失效）。
+**配置开到 10M ≠ 端到端 10M 已验证**。
+
 ## 2. 永远不许写的句子（红线）
 
 - ❌ 「v10 超越 / SOTA / 严格优于 Transformer / Mamba2」
@@ -108,6 +133,9 @@ v10.1 把三者以**中性初值**接入（0 / 1.0 / 0.0），
 - ❌ 「31 项能力全部在前向贡献数值」——9 项是契约门、2 项 DEFERRED，见 §1d
 - ❌ 「无词表设计已继承」——源码中不存在、未推送，`set_contract` 显式拒绝
 - ❌ 「完全继承 = 能力更强 / 定理在 LM 上复现」——定义只到 slot + 全关零回归
+- ❌ 「10M 上下文端到端已验证 / 已跑通」——只有配置 + 分支侧 O(1) 实跑，teacher 侧账本不可行
+- ❌ 「SMM 自发自进化 / 模型自己学会记忆」——`observe()` 是显式门禁，未调用时贡献严格为零
+- ❌ 「v10.3 继承了 31 项全部能力」——本次范围只到 3 组，其余排除在继承声明外
 
 **允许写**：`β=0 逐位零回归`、`219/219 COPY 全量逐位一致`、
 `FFT↔IIR 1.69e−14`、`O(1) 定态`、`P7 主干不回写`、

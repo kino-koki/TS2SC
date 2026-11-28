@@ -1,0 +1,33 @@
+{
+  "_name_or_path": "openbmb/MiniCPM5-1B",
+  "architectures": [
+    "LlamaForCausalLM"
+  ],
+  "bos_token_id": 0,
+  "eos_token_id": [
+    1,
+    130073
+  ],
+  "pad_token_id": 1,
+  "hidden_act": "silu",
+  "hidden_size": 1536,
+  "initializer_range": 0.02,
+  "intermediate_size": 4608,
+  "max_position_embeddings": 10485760,
+  "model_type": "llama",
+  "num_attention_heads": 16,
+  "num_hidden_layers": 24,
+  "num_key_value_heads": 2,
+  "head_dim": 128,
+  "rms_norm_eps": 1e-06,
+  "rope_theta": 5000000,
+  "rope_scaling": null,
+  "tie_word_embeddings": false,
+  "torch_dtype": "bfloat16",
+  "transformers_version": "5.6.2",
+  "use_cache": true,
+  "vocab_size": 130560,
+  "_ts2sc_context_note": "Opened to 10M per delivery instruction. This is a CONFIG value, NOT an end-to-end verified length: hybrid retains teacher full attention (see hbm_ledger). RoPE 80x extrapolation unverified.",
+  "_ts2sc_context_decimal": 10000000,
+  "_ts2sc_context_base": 131072
+}

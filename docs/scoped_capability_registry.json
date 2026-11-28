@@ -1,0 +1,73 @@
+{
+  "schema": "TS2SC/v10.3-scoped-capability-registry",
+  "date": "2026-11-28",
+  "status": "AUTHORITATIVE_FOR_THIS_DELIVERY",
+  "scope": "SGC + three sidecars + SMM only (user narrowed scope)",
+  "context_tokens": 10485760,
+  "groups": [
+    {
+      "id": "G1_SGC_CORE",
+      "gates": [
+        "core.Win",
+        "core.Wg",
+        "core.Wloc",
+        "core.feed",
+        "role.Wc",
+        "Wdown",
+        "Wup"
+      ],
+      "modules": [
+        "Frozen static SGC kernel psi=rho^tau sin((tau+1)theta)",
+        "FFT<->IIR duality",
+        "O(1) recurrent state",
+        "strict causality",
+        "input-side role bit T2'",
+        "low-rank concat readout 224->d"
+      ]
+    },
+    {
+      "id": "G2_SIDECARS",
+      "gates": [
+        "sc.Wg",
+        "sc.Wk",
+        "liq.Wg",
+        "bind.C"
+      ],
+      "modules": [
+        "A 3-layer k=7 gated short conv",
+        "B CfC liquid gate (input-dependent tau)",
+        "C Hadamard SE1 content-addressed binding",
+        "P7: sidecars never write back frozen trunk"
+      ]
+    },
+    {
+      "id": "G3_SMM",
+      "gates": [
+        "s_smm"
+      ],
+      "source": "upstream evolution_mixer.py FusedEvolutionMixer / CalibratedFusedMixer",
+      "modules": [
+        "S_t = rho_mem S_{t-1} + sum_accepted C[k]^T C[VK+v]",
+        "zero-order consolidation observe(): tau evidence, dominance, cooldown, read-back rejection, capacity eviction",
+        "add_t = C[bucket(tok)] S_t W_c",
+        "O(1) state independent of L / n_bindings"
+      ]
+    }
+  ],
+  "master_gates": [
+    "gate.alpha",
+    "gate.beta"
+  ],
+  "switch_law": "all_off => y === T(x) bitwise; smm_off => bitwise v10.2 full-on",
+  "out_of_scope": "9 CONTRACT items, 2 DEFERRED vocab-free items and all engineering-contract entries from capability_registry.json remain in the repo (NOT deleted per user instruction) but are EXCLUDED from this delivery's inheritance claim",
+  "excluded_claims": [
+    "COMPLETE_BEYOND",
+    "SOTA",
+    "native-level",
+    "capability improvement",
+    "8M/10M end-to-end verified",
+    "theorems reproduced on LM",
+    "ungated self-evolution"
+  ],
+  "honest_definition": "Inheritance = each of the 3 groups has a switchable slot AND all-off is bitwise the original teacher. SMM self-evolution is gated by explicit observe() calls only; it is NOT spontaneous."
+}

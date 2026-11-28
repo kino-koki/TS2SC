@@ -68,7 +68,13 @@ def main():
             "v10_0_delta_baseline.json", "v10_read_contract_audit.json",
             "v10_1_bitwise_equivalence.json",
             "SWITCH_LAW.md", "capability_registry.json",
-            "v10_switch_law_audit.json", "v10_switch_law_audit.py"]
+            "v10_switch_law_audit.json", "v10_switch_law_audit.py",
+            "V10_3_SCOPED_DELIVERY.md", "scoped_capability_registry.json",
+            "v10_3_scoped_verify.json",
+            "student_scoped_manifest_v10_3.json",
+            "student_smm_v10_3.safetensors",
+            "context_10m_config.json", "inference_default_v10_3.json",
+            "smm_v10_3.py", "scoped_v10_3.py", "test_v10_3.py"]
     for p in need:
         print(f"  {'OK ' if p in sm else 'MISS'} {p}")
     shards = [p for p in sm if p.startswith("weights_v10/student_branch_v10.part")]
@@ -170,6 +176,39 @@ def main():
           "| all_off:", "def all_off" in rcs2,
           "| contract_flags:", "contract_flags" in rcs2,
           "| deferred_flags:", "deferred_flags" in rcs2)
+
+    print("\n=== 5e v10.3 范围收窄 + 10M 远端核对 ===")
+    v3 = json.loads(raw(MODEL, "v10_3_scoped_verify.json"))
+    q3 = v3["verification"]
+    reg3 = json.loads(raw(MODEL, "scoped_capability_registry.json"))
+    cfg10 = json.loads(raw(MODEL, "context_10m_config.json"))
+    man3 = json.loads(raw(MODEL, "student_scoped_manifest_v10_3.json"))
+    print("  passed", q3["passed"],
+          "| groups", [g["id"] for g in reg3["groups"]],
+          "| context", cfg10["max_position_embeddings"])
+    print("  manifest", man3["n_tensors"], man3["counts"],
+          "| unclassified", man3["unclassified"])
+    print("  COPY 219 full bitwise", q3["phase1_copy_219_full_bitwise"],
+          "| branch rebuild identical",
+          q3["phase1_branch_rebuild_identical"])
+    print("  branch 10M state constant", q3["phase2_branch_state_constant"],
+          "| bytes", q3["phase2_branch_state_bytes"],
+          "| attention", q3["phase2_attention_status"],
+          q3["phase2_attention_kv_gib"], "GiB",
+          "| RoPE", q3["phase2_rope_extrapolation"], "x")
+    print("  SMM commits/layer",
+          q3["smm_explicit_consolidation"]["commits_per_layer"],
+          "| all 24 layers",
+          q3["smm_explicit_consolidation"]["all_24_layers"])
+    print("  T==OFF", q3["T_equals_OFF_tokenwise"],
+          "| ON!=OFF", q3["ON_differs_from_OFF"],
+          "| all finite", q3["all_logits_finite"],
+          "| all gate", q3["all_decode_gate"],
+          "| leaks", q3["identity_marker_leaks"])
+    smm_blob = raw(MODEL, "student_smm_v10_3.safetensors")
+    print("  SMM checkpoint sha matches manifest:",
+          __import__("hashlib").sha256(smm_blob).hexdigest()
+          == man3["smm_checkpoint"]["sha256"])
 
     print("\n=== 6 字节一致（本地 → 远端） ===")
     sys.path.insert(0, "/data/workspace/ts2sc_v8")

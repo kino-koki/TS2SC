@@ -1,0 +1,19 @@
+{
+  "schema": "TS2SC/inference-default-v10.3",
+  "model": "MiniCPM5-1B-TS2SC",
+  "scope": [
+    "SGC_CORE",
+    "SIDECARS",
+    "SMM"
+  ],
+  "max_position_embeddings": 10485760,
+  "beta": 1.0,
+  "groups": {
+    "SGC_CORE": true,
+    "SIDECARS": true,
+    "SMM": true
+  },
+  "smm_consolidation": "EXPLICIT observe() gate only; S init zero, NOT spontaneous self-evolution",
+  "identity_adapter": "none (RETIRED)",
+  "note": "10M is a CONFIG value; teacher full-attention side INFEASIBLE_LEDGER (240 GiB KV). Branch state is O(1)."
+}

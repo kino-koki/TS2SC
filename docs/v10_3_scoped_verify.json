@@ -1,0 +1,812 @@
+{
+  "title": "TS2SC v10.3 · 范围收窄（SGC + 外挂 + SMM）+ 10M 上下文 · 迁移与验证",
+  "date": "2026-11-28 18:13:27",
+  "instruction": "迁移并且验证模型 / 就继承 SGC 以及其外挂模块 SMM记忆与自进化模块就行了，上下文开到10M",
+  "scope": {
+    "schema": "TS2SC/v10.3-scoped-capability-registry",
+    "date": "2026-11-28",
+    "status": "AUTHORITATIVE_FOR_THIS_DELIVERY",
+    "scope": "SGC + three sidecars + SMM only (user narrowed scope)",
+    "context_tokens": 10485760,
+    "groups": [
+      {
+        "id": "G1_SGC_CORE",
+        "gates": [
+          "core.Win",
+          "core.Wg",
+          "core.Wloc",
+          "core.feed",
+          "role.Wc",
+          "Wdown",
+          "Wup"
+        ],
+        "modules": [
+          "Frozen static SGC kernel psi=rho^tau sin((tau+1)theta)",
+          "FFT<->IIR duality",
+          "O(1) recurrent state",
+          "strict causality",
+          "input-side role bit T2'",
+          "low-rank concat readout 224->d"
+        ]
+      },
+      {
+        "id": "G2_SIDECARS",
+        "gates": [
+          "sc.Wg",
+          "sc.Wk",
+          "liq.Wg",
+          "bind.C"
+        ],
+        "modules": [
+          "A 3-layer k=7 gated short conv",
+          "B CfC liquid gate (input-dependent tau)",
+          "C Hadamard SE1 content-addressed binding",
+          "P7: sidecars never write back frozen trunk"
+        ]
+      },
+      {
+        "id": "G3_SMM",
+        "gates": [
+          "s_smm"
+        ],
+        "source": "upstream evolution_mixer.py FusedEvolutionMixer / CalibratedFusedMixer",
+        "modules": [
+          "S_t = rho_mem S_{t-1} + sum_accepted C[k]^T C[VK+v]",
+          "zero-order consolidation observe(): tau evidence, dominance, cooldown, read-back rejection, capacity eviction",
+          "add_t = C[bucket(tok)] S_t W_c",
+          "O(1) state independent of L / n_bindings"
+        ]
+      }
+    ],
+    "master_gates": [
+      "gate.alpha",
+      "gate.beta"
+    ],
+    "switch_law": "all_off => y === T(x) bitwise; smm_off => bitwise v10.2 full-on",
+    "out_of_scope": "9 CONTRACT items, 2 DEFERRED vocab-free items and all engineering-contract entries from capability_registry.json remain in the repo (NOT deleted per user instruction) but are EXCLUDED from this delivery's inheritance claim",
+    "excluded_claims": [
+      "COMPLETE_BEYOND",
+      "SOTA",
+      "native-level",
+      "capability improvement",
+      "8M/10M end-to-end verified",
+      "theorems reproduced on LM",
+      "ungated self-evolution"
+    ],
+    "honest_definition": "Inheritance = each of the 3 groups has a switchable slot AND all-off is bitwise the original teacher. SMM self-evolution is gated by explicit observe() calls only; it is NOT spontaneous."
+  },
+  "phase0": {
+    "all_blob_sha_verified": true,
+    "n_parts": 22
+  },
+  "phase1": {
+    "n_tensors": 579,
+    "counts": {
+      "COPY": 219,
+      "DERIVE": 0,
+      "NEW": 360
+    },
+    "unclassified": 0,
+    "n_copy_audited": 219,
+    "n_copy_mismatched": 0,
+    "copy_bytes": 2161265664,
+    "copy_mismatches": [],
+    "n_v102_new_reopen_checked": 312,
+    "n_v102_new_reopen_mismatched": 0,
+    "branch_rebuild_bitwise_identical_to_pushed": true,
+    "smm_checkpoint": {
+      "path": "/data/workspace/output/student_smm_v10_3.safetensors",
+      "n_tensors": 48,
+      "data_bytes": 786432,
+      "file_bytes": 790720,
+      "header": {
+        "model.blocks.0.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            0,
+            16384
+          ]
+        },
+        "model.blocks.0.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            16384,
+            32768
+          ]
+        },
+        "model.blocks.1.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            32768,
+            49152
+          ]
+        },
+        "model.blocks.1.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            49152,
+            65536
+          ]
+        },
+        "model.blocks.2.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            65536,
+            81920
+          ]
+        },
+        "model.blocks.2.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            81920,
+            98304
+          ]
+        },
+        "model.blocks.3.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            98304,
+            114688
+          ]
+        },
+        "model.blocks.3.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            114688,
+            131072
+          ]
+        },
+        "model.blocks.4.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            131072,
+            147456
+          ]
+        },
+        "model.blocks.4.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            147456,
+            163840
+          ]
+        },
+        "model.blocks.5.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            163840,
+            180224
+          ]
+        },
+        "model.blocks.5.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            180224,
+            196608
+          ]
+        },
+        "model.blocks.6.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            196608,
+            212992
+          ]
+        },
+        "model.blocks.6.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            212992,
+            229376
+          ]
+        },
+        "model.blocks.7.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            229376,
+            245760
+          ]
+        },
+        "model.blocks.7.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            245760,
+            262144
+          ]
+        },
+        "model.blocks.8.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            262144,
+            278528
+          ]
+        },
+        "model.blocks.8.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            278528,
+            294912
+          ]
+        },
+        "model.blocks.9.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            294912,
+            311296
+          ]
+        },
+        "model.blocks.9.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            311296,
+            327680
+          ]
+        },
+        "model.blocks.10.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            327680,
+            344064
+          ]
+        },
+        "model.blocks.10.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            344064,
+            360448
+          ]
+        },
+        "model.blocks.11.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            360448,
+            376832
+          ]
+        },
+        "model.blocks.11.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            376832,
+            393216
+          ]
+        },
+        "model.blocks.12.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            393216,
+            409600
+          ]
+        },
+        "model.blocks.12.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            409600,
+            425984
+          ]
+        },
+        "model.blocks.13.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            425984,
+            442368
+          ]
+        },
+        "model.blocks.13.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            442368,
+            458752
+          ]
+        },
+        "model.blocks.14.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            458752,
+            475136
+          ]
+        },
+        "model.blocks.14.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            475136,
+            491520
+          ]
+        },
+        "model.blocks.15.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            491520,
+            507904
+          ]
+        },
+        "model.blocks.15.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            507904,
+            524288
+          ]
+        },
+        "model.blocks.16.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            524288,
+            540672
+          ]
+        },
+        "model.blocks.16.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            540672,
+            557056
+          ]
+        },
+        "model.blocks.17.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            557056,
+            573440
+          ]
+        },
+        "model.blocks.17.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            573440,
+            589824
+          ]
+        },
+        "model.blocks.18.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            589824,
+            606208
+          ]
+        },
+        "model.blocks.18.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            606208,
+            622592
+          ]
+        },
+        "model.blocks.19.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            622592,
+            638976
+          ]
+        },
+        "model.blocks.19.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            638976,
+            655360
+          ]
+        },
+        "model.blocks.20.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            655360,
+            671744
+          ]
+        },
+        "model.blocks.20.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            671744,
+            688128
+          ]
+        },
+        "model.blocks.21.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            688128,
+            704512
+          ]
+        },
+        "model.blocks.21.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            704512,
+            720896
+          ]
+        },
+        "model.blocks.22.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            720896,
+            737280
+          ]
+        },
+        "model.blocks.22.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            737280,
+            753664
+          ]
+        },
+        "model.blocks.23.smm.W_c": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            753664,
+            770048
+          ]
+        },
+        "model.blocks.23.smm.C": {
+          "dtype": "F32",
+          "shape": [
+            64,
+            64
+          ],
+          "data_offsets": [
+            770048,
+            786432
+          ]
+        },
+        "__metadata__": {
+          "format": "pt",
+          "ts2sc": "v10.3",
+          "module": "SMM",
+          "source": "evolution_mixer.py"
+        }
+      },
+      "ds": 4288
+    },
+    "smm_tensors": 48,
+    "elapsed_s": 3.8,
+    "passed": true
+  },
+  "phase2_context": {
+    "L": 10485760,
+    "level": "REAL_RUN_BRANCH_SIDE",
+    "method": "O(1) closed-form idle jump, NOT 10M loop iterations",
+    "state_bytes_before": 3675648,
+    "state_bytes_after": 3675648,
+    "state_independent_of_L": true,
+    "logical_pos": 10485760,
+    "smm_observe": {
+      "commits": 16,
+      "rejects": 1278,
+      "slots": 16,
+      "S_norm": 3.767237216975334,
+      "all_24_layers_consolidated": true
+    },
+    "smm_read_back": {
+      "key_value": 5,
+      "margin": 0.9417504025116814
+    },
+    "idle_closed_form_equals_stepwise_gate0": true,
+    "attention": {
+      "L": 10485760,
+      "nl": 24,
+      "nkv": 2,
+      "hd": 128,
+      "kv_bytes": 257698037760,
+      "kv_gib": 240.0,
+      "attention_pairs": 54975586631680,
+      "attention_pairs_log10": 13.74,
+      "rope_extrapolation_factor": 80.0,
+      "rope_theta": 5000000,
+      "status": "INFEASIBLE_LEDGER",
+      "note": "HBM/arithmetic ledger judgement, NOT a failed real run. SGC+SMM branch state is O(1) and independent of L."
+    },
+    "verdict": "BRANCH_SIDE_VERIFIED_10M / TEACHER_SIDE_INFEASIBLE_LEDGER",
+    "honest": "配置开到 10M 且分支状态恒定，不等于端到端 10M 可用：teacher 全注意力 KV 240 GiB 不可行；RoPE 80x 外推未验证。"
+  },
+  "generation": [
+    {
+      "lang": "zh",
+      "q": "你好",
+      "mode": "T",
+      "text": "<think>\n\n</think>\n\n你好！有什么我可以",
+      "ids": [
+        8,
+        130063,
+        9,
+        130063,
+        75828,
+        1398,
+        13720,
+        87600
+      ],
+      "n_prompt": 10,
+      "n_new": 8,
+      "logits_finite": true,
+      "decode_gate": true,
+      "identity_markers": []
+    },
+    {
+      "lang": "zh",
+      "q": "你好",
+      "mode": "OFF",
+      "text": "<think>\n\n</think>\n\n你好！有什么我可以",
+      "ids": [
+        8,
+        130063,
+        9,
+        130063,
+        75828,
+        1398,
+        13720,
+        87600
+      ],
+      "n_prompt": 10,
+      "n_new": 8,
+      "logits_finite": true,
+      "decode_gate": true,
+      "identity_markers": []
+    },
+    {
+      "lang": "zh",
+      "q": "你好",
+      "mode": "ON_ALL",
+      "text": "<think>\n嗯，用户发送的是一条简单的",
+      "ids": [
+        8,
+        220,
+        16431,
+        82579,
+        44310,
+        367,
+        87524,
+        31527
+      ],
+      "n_prompt": 10,
+      "n_new": 8,
+      "logits_finite": true,
+      "decode_gate": true,
+      "identity_markers": []
+    },
+    {
+      "lang": "en",
+      "q": "Hi",
+      "mode": "ON_ALL",
+      "text": "<think>\nThe user's message is just",
+      "ids": [
+        8,
+        220,
+        608,
+        5390,
+        468,
+        6786,
+        357,
+        1230
+      ],
+      "n_prompt": 10,
+      "n_new": 8,
+      "logits_finite": true,
+      "decode_gate": true,
+      "identity_markers": []
+    }
+  ],
+  "verification": {
+    "phase0_all_blob_sha_verified": true,
+    "phase0_n_parts": 22,
+    "phase1_passed": true,
+    "phase1_manifest_counts": {
+      "COPY": 219,
+      "DERIVE": 0,
+      "NEW": 360
+    },
+    "phase1_copy_219_full_bitwise": true,
+    "phase1_branch_rebuild_identical": true,
+    "phase2_context_tokens": 10485760,
+    "phase2_branch_state_constant": true,
+    "phase2_branch_state_bytes": 3675648,
+    "phase2_idle_closed_form_equals_stepwise": true,
+    "phase2_attention_status": "INFEASIBLE_LEDGER",
+    "phase2_attention_kv_gib": 240.0,
+    "phase2_rope_extrapolation": 80.0,
+    "smm_explicit_consolidation": {
+      "commits_per_layer": 16,
+      "rejects_per_layer": 1278,
+      "slots": 16,
+      "S_norm": 3.7672,
+      "all_24_layers": true
+    },
+    "T_equals_OFF_tokenwise": true,
+    "ON_differs_from_OFF": true,
+    "ON_zh_en_distinct": true,
+    "all_logits_finite": true,
+    "all_decode_gate": true,
+    "identity_marker_leaks": 0,
+    "passed": true
+  },
+  "honest_boundaries": [
+    "SMM 来源为上游真实源码 evolution_mixer.py 的 FusedEvolutionMixer / CalibratedFusedMixer（SMM x SGC 融合状态），移植为推理期逐 token 的 64 维低秩分支；非编造。",
+    "SMM 的 observe() 是**显式门禁**：S 初值全零，未调用 observe 时贡献严格为零（与 v10.2 全开逐位相同）。本轮巩固用的是结构化强共现演示数据，不是训练结果、不是模型自发记忆。",
+    "自查抓到并修复：SGC 与 SMM 各自归一化到 βε‖x‖，直接相加会突破 T1' 总契约；现对总和统一投影，smm_off 时零缩放保持逐位相同。",
+    "10M 是**配置值 + 分支侧 O(1) 闭式实跑**；teacher 侧全注意力KV 240 GiB、80× RoPE 外推未验证 ⇒ 端到端 10M 仍 INFEASIBLE_LEDGER，不是实跑失效。",
+    "8 token 短生成只证 finite / 不乱码 / 全关零回归 / 三组继承生效 / 零身份标记；不是质量、事实正确性或能力结论。",
+    "β=1 仍是尺度契约配置，不是 L2 校准成品；P-β 仍 NOT_TESTED。",
+    "无 ppl / KL / 配对 CI / 吞吐 / SOTA / 原生级 / 定理在 LM 复现声明。",
+    "本次交付范围排除 9 CONTRACT + 2 DEFERRED 等历史条目，但按用户「不删除任何条目」原样保留在仓里，只是不纳入继承声明。",
+    "端到端生成是「真实权重 + 24 层融合 hook」运行时挂接，不是对已组装 2.6 GB 静态大文件的直接加载（磁盘不足）。"
+  ],
+  "elapsed_s": 580.2
+}
