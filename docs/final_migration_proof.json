@@ -1,0 +1,187 @@
+{
+  "title": "TS2SC v10.3 · 终局迁移真实性证明（7 组独立判据）",
+  "date": "2026-11-28 18:34:23",
+  "instruction": "证明该模型真正的迁移成功，并且继承SGC等特性等等一切必须的证明",
+  "claim": "迁移成功 = 219 teacher 张量逐位保留 + 360 NEW 张量真实接入前向 + 三组特性各自可归因 + 全关逐位回到原模型 + 生成级 T==OFF / ON≠OFF；不等于能力变强或定理在 LM 复现。",
+  "groups": {
+    "P1": {
+      "teacher_n": 219,
+      "student_n": 579,
+      "n_copy": 219,
+      "n_new": 360,
+      "n_derive": 0,
+      "added": 360,
+      "removed": 0,
+      "unclassified": 0,
+      "new_groups": {
+        "SGC_CORE_and_SIDECARS": 312,
+        "SMM": 48
+      },
+      "original_teacher_keys_all_present": true,
+      "passed": true
+    },
+    "P2": {
+      "n_new_reopened": 360,
+      "n_new_mismatched": 0,
+      "mismatches": [],
+      "new_checkpoint_sha": "1a96f234a50f9951f359941c2a84d278a52328573d5b0471c41e7ec0a3b85b3b",
+      "smm_checkpoint_sha": "dcf7d1acf88967605e8130b7c85a2ca32fcbf348f24a063a1c9926fdf4b8a5c9",
+      "branch_sha_matches_manifest": true,
+      "smm_sha_matches_manifest": true,
+      "copy_219_live_full_audit": {
+        "audited": 219,
+        "mismatched": 0,
+        "all_identical": true
+      },
+      "passed": true
+    },
+    "P3": {
+      "rows": [
+        {
+          "arm": "ALL_OFF_vs_zero",
+          "value": 0.0,
+          "meaning": "全关 Δ 严格 0 ⇒ 原模型"
+        },
+        {
+          "arm": "ALL_ON_norm",
+          "value": 3.8705484867095947,
+          "meaning": "全开 Δ 非零 ⇒ 分支接进前向"
+        },
+        {
+          "arm": "G1_SGC_CORE_off_diff",
+          "value": 0.2747441902756691,
+          "meaning": "关 G1 必改变 Δ"
+        },
+        {
+          "arm": "G2_SIDECARS_off_diff",
+          "value": 0.03615020960569382,
+          "meaning": "关 G2 必改变 Δ"
+        },
+        {
+          "arm": "G3_SMM_off_diff",
+          "value": 0.21809838339686394,
+          "meaning": "关 G3 必改变 Δ（记忆真在贡献）"
+        },
+        {
+          "arm": "SMM_state_zero_diff",
+          "value": 0.21809838339686394,
+          "meaning": "S 置零 ⇒ 与关 SMM 同向，非固定常量"
+        },
+        {
+          "arm": "bind.C_asymmetric_noise_diff",
+          "value": 0.018925771117210388,
+          "meaning": "扰动 NEW 权重 ⇒ Δ 改变，排除空挂/常量"
+        },
+        {
+          "arm": "v10_2_full_on_bitwise_when_smm_off",
+          "value": 0.0,
+          "meaning": "SMM 关 ⇒ 与 v10.2 全开逐位相同（同零状态）"
+        }
+      ],
+      "layer_diffs": [
+        0.392831951379776,
+        0.3326573669910431,
+        0.3823300004005432,
+        0.3490973114967346,
+        0.3391552269458771,
+        0.3525407314300537,
+        0.3614065647125244,
+        0.35572928190231323,
+        0.3507267236709595,
+        0.3063518702983856,
+        0.3434695899486542,
+        0.4352443516254425,
+        0.4033719599246979,
+        0.32506993412971497,
+        0.32940149307250977,
+        0.31814590096473694,
+        0.318551629781723,
+        0.32689332962036133,
+        0.3223758637905121,
+        0.4162173569202423,
+        0.3855834901332855,
+        0.36533546447753906,
+        0.3139856159687042,
+        0.33165791630744934
+      ],
+      "n_layers_with_nonzero_delta": 24,
+      "all_off_strict_zero": true,
+      "all_on_finite": true,
+      "T1_ratio": 1.000000018970149,
+      "T1_within_bound": true,
+      "all_groups_independently_attributable": true,
+      "smm_off_bitwise_v10_2": true,
+      "passed": true
+    },
+    "P4": {
+      "source": "v10_3_scoped_verify.json (LIVE 22-shard pull + real generation)",
+      "T_equals_OFF_tokenwise": true,
+      "ON_differs_from_OFF": true,
+      "ON_zh_en_distinct": true,
+      "all_logits_finite": true,
+      "all_decode_gate": true,
+      "identity_marker_leaks": 0,
+      "smm_commits_per_layer": 16,
+      "passed": true
+    },
+    "P5": {
+      "FFT_IIR_duality": "1.69e-14 (fresh_migrate_v10.arch_checks)",
+      "O1_state_bytes": 3675648,
+      "state_constant_over_10M": true,
+      "P7_sidecars_never_write_trunk": true,
+      "SE1_zero_crosstalk": "0.0 / 0.0 (arch_checks)",
+      "T1_total_contract": true,
+      "idle_closed_form_equals_stepwise": true,
+      "context_10M_branch_verified": "BRANCH_SIDE_VERIFIED_10M / TEACHER_SIDE_INFEASIBLE_LEDGER",
+      "attention_INFEASIBLE_LEDGER": "INFEASIBLE_LEDGER",
+      "passed": true
+    },
+    "P6": {
+      "source": "v10_switch_law_audit.json",
+      "all_off_bitwise_zero": true,
+      "single_off_13_of_13_when_activated": true,
+      "contract_flags_never_change_forward": true,
+      "deferred_refused": true,
+      "all_on_27_of_27_bitwise": true,
+      "passed": true
+    },
+    "P7": {
+      "branch_rebuild_bitwise_identical_to_pushed": true,
+      "delta_27_of_27_vs_v10_0_baseline": true,
+      "deterministic_generation_rerun": true,
+      "passed": true
+    }
+  },
+  "verification": {
+    "all_seven_groups_passed": true,
+    "per_group": {
+      "P1": true,
+      "P2": true,
+      "P3": true,
+      "P4": true,
+      "P5": true,
+      "P6": true,
+      "P7": true
+    },
+    "teacher_keys_preserved": 219,
+    "student_keys": 579,
+    "new_tensors_all_byte_verified": 360,
+    "all_off_is_bitwise_original_model": true,
+    "three_groups_independently_attributable": true,
+    "smm_really_consolidated": 16,
+    "generation_T_equals_OFF": true,
+    "context": 10485760,
+    "attention_status": "INFEASIBLE_LEDGER"
+  },
+  "honest_boundaries": [
+    "「原模型直接跑」被 P1/P3 排除：student 有 360 个 teacher 里不存在的张量，且逐组关断/权重扰动都改变 Δ；全关时又逐位回到 teacher。",
+    "β=0 / 全关是零回归对照臂，不是交付配置；交付 β=1.0。",
+    "SMM 是显式 observe() 门禁，不是自发自演化；本轮巩固为演示数据。",
+    "10M 是配置 + 分支 O(1) 闭式实跑；teacher 全注意力 240 GiB KV ⇒ 端到端 INFEASIBLE_LEDGER，不声称 10M 已跑通。",
+    "8 token 短生成只证 finite / 不乱码 / 零回归 / 架构生效；不是质量、事实正确性或能力结论。",
+    "无 ppl / KL / 配对 Wilson CI / 吞吐 / SOTA / 原生级 / 定理在 LM 复现声明。",
+    "端到端为「真实权重 + 24 层融合 hook」运行时挂接；完整 student 由仓内 materialize 脚本组装并逐位校验。",
+    "本轮不重新拉 2 GiB、不重跑 580 s 生成：LIVE 真相由 v10_3_scoped_verify.json 与 v10_copy_full_audit.json 承载。"
+  ],
+  "elapsed_s": 32.8
+}

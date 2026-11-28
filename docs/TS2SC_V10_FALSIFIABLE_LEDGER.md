@@ -50,6 +50,8 @@ v11 只看 delta 的 A2 判据 → 加「赢所在 L 上 S 的 bpc 劣化 ≤ +1
 | **P-switch** | 31/31 能力都有可切换 slot，且全关逐位 ≡ 原模型 | `VERIFIED`（v10.2） | 全关 Δ 非零、或某门无法独立差分、或契约门改变前向、或 DEFERRED 可置 True 即证伪 | 已 `test_v10.py::test_19/20/21`，见 `SWITCH_LAW.md` |
 | **P-scope** | 交付只继承 SGC_CORE + SIDECARS + SMM 三组，且 SMM 真的被门禁写入（非空挂） | `VERIFIED`（v10.3） | `observe()` 后 commits=0 / 读回不命中 / 全开与 smm_off 无差异即证伪 | 已 `test_v10_3.py::test_04/05/06/07`，见 `V10_3_SCOPED_DELIVERY.md` |
 | **P-10M** | 配置开到 10M 且分支状态 O(1) 恒定；端到端仍不可行 | `PARTIAL`（v10.3） | 分支状态随 L 增长、或闭式 ≠ 逐步 gate=0 即证伪分支侧；teacher 侧 240 GiB KV 账本判定不可行 | 已 `test_v10_3.py::test_09/10`，见 §1e |
+| **P-proof** | 7 组独立判据证明迁移真实且三组特性可归因，排除「原模型直接跑」 | `VERIFIED`（终局） | 全关 Δ 非零、360 NEW 任一 sha 不符、任一组关断不改变 Δ、生成级 T≠OFF 即证伪 | 已 `final_migration_proof.py`，见 `FINAL_MIGRATION_PROOF.md` |
+| **P-fullweights** | 仓库自包含完整权重：2.01 GiB teacher COPY 字节在仓，可逐位组装 579 张量 | `VERIFIED`（终局） | 子片 sha256 不符或 materialize 任一 entry 校验失败即证伪 | `FULL_WEIGHTS_PUSH_REPORT.json` / `materialize_full_student_v10_3.py` / 组装逻辑 5 张量小规模真跑 `materialize_logic_test.json` |
 
 ---
 

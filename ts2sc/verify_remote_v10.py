@@ -210,6 +210,48 @@ def main():
           __import__("hashlib").sha256(smm_blob).hexdigest()
           == man3["smm_checkpoint"]["sha256"])
 
+    print("\n=== 5f 完整权重自包含 + 终局证明远端核对 ===")
+    # 只列 tree 元数据，不下载 2 GiB 内容
+    ref = api(f"/repos/{OWNER}/{MODEL}/git/ref/heads/main")
+    tree_data = api(f"/repos/{OWNER}/{MODEL}/git/trees/"
+                    f"{ref['object']['sha']}?recursive=1")
+    blobs = [x for x in tree_data.get("tree", []) if x["type"] == "blob"]
+    subs = [x for x in blobs
+            if x["path"].startswith("teacher_shards/part_")
+            and x["path"].endswith(".bin")]
+    man = json.loads(raw(MODEL, "teacher_shards/MANIFEST.json"))
+    print("  teacher_shards subshards", len(subs), "/", man["n_subshards"],
+          "| total bytes", sum(x.get("size", 0) for x in subs),
+          "/", man["total_bytes"])
+    print("  manifest teacher_sha256", man["teacher_sha256"][:16] + "…",
+          "| n_upstream_shards", man["n_upstream_shards"])
+    fw = json.loads(raw(MODEL, "FULL_WEIGHTS_PUSH_REPORT.json"))
+    print("  push report total", fw["total_bytes"], "| all_live_verified",
+          fw["all_live_blob_sha1_verified"], "| n_subshards",
+          fw["n_subshards"])
+    print("  materializer present:",
+          any(x["path"] == "materialize_full_student_v10_3.py"
+              for x in blobs),
+          "| FULL_WEIGHTS.md:",
+          any(x["path"] == "FULL_WEIGHTS.md" for x in blobs))
+    proof = json.loads(raw(MODEL, "final_migration_proof.json"))
+    pv = proof["verification"]
+    print("  FINAL PROOF 7/7:", pv["all_seven_groups_passed"],
+          "| per_group", pv["per_group"])
+    print("  NEW 360 byte-verified:", pv["new_tensors_all_byte_verified"],
+          "| three groups attributable:",
+          pv["three_groups_independently_attributable"],
+          "| all_off bitwise original:",
+          pv["all_off_is_bitwise_original_model"])
+    weights_ok = bool(
+        len(subs) == man["n_subshards"]
+        and sum(x.get("size", 0) for x in subs) == man["total_bytes"]
+        and fw["total_bytes"] == man["total_bytes"]
+        and any(x["path"] == "materialize_full_student_v10_3.py"
+                for x in blobs)
+        and pv["all_seven_groups_passed"])
+    print("  FULL WEIGHTS + PROOF passed:", weights_ok)
+
     print("\n=== 6 字节一致（本地 → 远端） ===")
     sys.path.insert(0, "/data/workspace/ts2sc_v8")
     os.environ.setdefault("GH_TOKEN", T)
