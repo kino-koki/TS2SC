@@ -1,0 +1,31 @@
+{
+  "W_spectral_norm_min": 2.873634903004217,
+  "W_spectral_norm_mean": 20.038396909793573,
+  "W_spectral_norm_max": 53.23363436324036,
+  "gamma_mean": 0.4195139408111572,
+  "gamma_min": 0.15663078427314758,
+  "gamma_max": 0.5,
+  "rel_amp_per_1e3_mean": 39.21469259262085,
+  "rel_amp_per_1e3_max": 58.10926818847656,
+  "cumulative_amplification": [
+    {
+      "eps": 0.02,
+      "factor": 1.6084372494752261
+    },
+    {
+      "eps": 0.05,
+      "factor": 3.225099943713703
+    },
+    {
+      "eps": 0.1,
+      "factor": 9.84973267580763
+    },
+    {
+      "eps": 0.15,
+      "factor": 28.625176191121405
+    }
+  ],
+  "train_cos": 0.999668,
+  "e2e_cos": 0.115028,
+  "heldout_cos": 0.076355
+}

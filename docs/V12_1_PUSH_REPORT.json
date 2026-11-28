@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-28 22:20:42",
+  "repo": "kino-koki/TS2SC",
+  "commit": "b70527d153b17d8059fa7294b7f6314ef32f23aa",
+  "files": 17,
+  "verdict": {
+    "THREE_CONSTRAINTS_MET": false,
+    "OPERATOR_MIGRATION_EFFECTIVE": false,
+    "hidden_cos_mean": 0.115028,
+    "first_argmax_agree": "1/8"
+  },
+  "model_repo_untouched": true,
+  "policy": "NO entry deleted"
+}
