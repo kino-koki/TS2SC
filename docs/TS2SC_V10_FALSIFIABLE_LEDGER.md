@@ -52,6 +52,10 @@ v11 只看 delta 的 A2 判据 → 加「赢所在 L 上 S 的 bpc 劣化 ≤ +1
 | **P-10M** | 配置开到 10M 且分支状态 O(1) 恒定；端到端仍不可行 | `PARTIAL`（v10.3） | 分支状态随 L 增长、或闭式 ≠ 逐步 gate=0 即证伪分支侧；teacher 侧 240 GiB KV 账本判定不可行 | 已 `test_v10_3.py::test_09/10`，见 §1e |
 | **P-proof** | 7 组独立判据证明迁移真实且三组特性可归因，排除「原模型直接跑」 | `VERIFIED`（终局） | 全关 Δ 非零、360 NEW 任一 sha 不符、任一组关断不改变 Δ、生成级 T≠OFF 即证伪 | 已 `final_migration_proof.py`，见 `FINAL_MIGRATION_PROOF.md` |
 | **P-fullweights** | 仓库自包含完整权重：2.01 GiB teacher COPY 字节在仓，可逐位组装 579 张量 | `VERIFIED`（终局） | 子片 sha256 不符或 materialize 任一 entry 校验失败即证伪 | `FULL_WEIGHTS_PUSH_REPORT.json` / `materialize_full_student_v10_3.py` / 组装逻辑 5 张量小规模真跑 `materialize_logic_test.json` |
+| **P-hybrid-admission** | v10.x β>0 交付**是 hybrid**：`y=T(x)+旁挂`，T(x) 为 Llama 全注意力 | `ADMITTED`（本轮） | 若 96 个 self_attn 张量不在推理链、或 β=0 不逐 token 退回 teacher 即证伪 | `V10_3_SCOPED_DELIVERY.md` / `SWITCH_LAW.md`；用户独立核验成立 |
+| **P-pure** | 纯 O(1) 无注意力主干 C1–C8 全绿（无 QKV/KV cache、10M 常驻、删外挂不退化） | `VERIFIED`（v11） | 任一 C 判据失败、或推理链出现 self_attn 张量即证伪 | `pure_backbone_v11_verify.json` / `PURE_BACKBONE_V11.md` |
+| **P-native-ability** | 非 hybrid + 原生 + 严格保留原模型能力，三者**不训练不可同时成立** | `FALSIFIED_AS_CLAIM` / `ABILITY_PRESERVED=False`（v11 实测） | 若 held-out cos ≥0.90 且 argmax 一致率 ≥0.90 即推翻本判定 | `ability_preservation_verdict.json`：原始 cos −0.0138、argmax 0/6、ridge held-out 0.7612、前缀坍缩 cos 0.999999 |
+| **P-distill** | 逐层蒸馏是唯一路径；训练后纯度 C1–C8 必须仍全绿 | `NOT_EXECUTED`（需 GPU） | 训练后任一验收门槛不达标即证伪 | `DISTILL_PROTOCOL.md`（无 checkpoint / 无分数，不伪造） |
 
 ---
 
@@ -138,6 +142,10 @@ SMM 来自上游真实源码 `evolution_mixer.py` 的 `FusedEvolutionMixer` /
 - ❌ 「10M 上下文端到端已验证 / 已跑通」——只有配置 + 分支侧 O(1) 实跑，teacher 侧账本不可行
 - ❌ 「SMM 自发自进化 / 模型自己学会记忆」——`observe()` 是显式门禁，未调用时贡献严格为零
 - ❌ 「v10.3 继承了 31 项全部能力」——本次范围只到 3 组，其余排除在继承声明外
+- ❌ 「β>0 模型是 SimplCore 原生」——它是 hybrid，主干是 Llama 全注意力
+- ❌ 「纯主干已保留原模型能力」——`ABILITY_PRESERVED=False`，前缀信息坍缩
+- ❌ 「线性 ridge 对齐 = 能力迁移」——held-out 0.7612 < 0.90，只是插值上界
+- ❌ 「CPU 沙盒已跑完蒸馏」——`NOT_EXECUTED`，无 checkpoint / 无分数
 
 **允许写**：`β=0 逐位零回归`、`219/219 COPY 全量逐位一致`、
 `FFT↔IIR 1.69e−14`、`O(1) 定态`、`P7 主干不回写`、

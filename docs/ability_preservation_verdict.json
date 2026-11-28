@@ -1,0 +1,124 @@
+{
+  "title": "严格保留原模型能力 · 可证伪判决（非 Hybrid / 纯主干）",
+  "date": "2026-11-28 20:10:54",
+  "instruction": "在严格保留原模型能力条件下，不做 Transformer Hybrid，而是真正的迁移版 SimplCore 原生模型",
+  "prompts": [
+    {
+      "lang": "zh",
+      "q": "你好，请介绍一下自己",
+      "n_tokens": 14,
+      "teacher_argmax": 8,
+      "pure_argmax": 18738,
+      "agree": 0,
+      "raw_cos": -0.033376
+    },
+    {
+      "lang": "zh",
+      "q": "中国的首都是",
+      "n_tokens": 12,
+      "teacher_argmax": 8,
+      "pure_argmax": 18738,
+      "agree": 0,
+      "raw_cos": 0.008991
+    },
+    {
+      "lang": "en",
+      "q": "The capital of France is",
+      "n_tokens": 18,
+      "teacher_argmax": 8,
+      "pure_argmax": 18738,
+      "agree": 0,
+      "raw_cos": -0.002086
+    },
+    {
+      "lang": "en",
+      "q": "What is two plus two?",
+      "n_tokens": 19,
+      "teacher_argmax": 8,
+      "pure_argmax": 18738,
+      "agree": 0,
+      "raw_cos": -0.011529
+    },
+    {
+      "lang": "zh",
+      "q": "请把这句话翻译成英文：今天天气很好",
+      "n_tokens": 19,
+      "teacher_argmax": 8,
+      "pure_argmax": 18738,
+      "agree": 0,
+      "raw_cos": -0.028568
+    },
+    {
+      "lang": "en",
+      "q": "List three cities in China:",
+      "n_tokens": 20,
+      "teacher_argmax": 8,
+      "pure_argmax": 18738,
+      "agree": 0,
+      "raw_cos": -0.016231
+    }
+  ],
+  "verdict": {
+    "n_prompts": 6,
+    "teacher_all_live_blob_sha_verified": true,
+    "raw_hidden_cos": [
+      -0.033375899873899835,
+      0.008991346981886934,
+      -0.0020863149589045683,
+      -0.01152916584728883,
+      -0.02856798651893868,
+      -0.016231433429502385
+    ],
+    "raw_hidden_cos_mean": -0.0138,
+    "raw_argmax_agree": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "top5_overlap": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "raw_argmax_agreement_rate": 0.0,
+    "ridge_train_hidden_cos": [
+      0.6476287214330454,
+      0.6969427739674122,
+      0.8776794800141167,
+      0.8227789362913149,
+      0.8346163630253688
+    ],
+    "ridge_train_cos_mean": 0.775929,
+    "ridge_holdout_hidden_cos": 0.761171,
+    "ridge_holdout_argmax_upper_proxy": false,
+    "pure_argmax_distinct": 1,
+    "pure_hidden_direction_cos_vs_first": [
+      1.0,
+      0.999999,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "pure_prefix_information_collapsed": true,
+    "teacher_logits_all_finite": true,
+    "pure_logits_all_finite": true,
+    "ABILITY_PRESERVED": false,
+    "verdict_reason": "纯主干是随机初始化的 SimplCore 函数类，与 teacher 的注意力+FFN 不是同一个函数；线性 ridge 只能在训练 prompt 上插值，held-out 泛化崩掉。更硬的机制证据：6 个不同前缀下 pure 的 argmax 只有 1 种、hidden 方向 cos 最低 0.999999 ⇒ 前缀信息几乎不进最终表示，FFN 增益相对 embed 行过小。权重里内化的语言能力无法靠 COPY 之外壳迁移，必须逐层蒸馏训练。"
+  },
+  "pure_backbone_C1_C8": true,
+  "honest_boundaries": [
+    "纯主干 C1–C8 已全绿（无注意力、O(1)、10M 常驻、删外挂不退化），但**纯度 ≠ 能力**：随机初始化不继承 teacher 的语言知识。",
+    "ridge 对齐是闭式线性上界探针，不是训练；held-out 才是能力判据。",
+    "未跑 ppl / benchmark / 生成质量主观评估；argmax 一致率与 hidden cos 是能力保留的必要代理，不是充分证明。",
+    "6 个 prompt 的 teacher argmax 均为 id=8（模板结尾同 token），故 argmax 一致率判别力有限；主判据是 hidden cos 与 held-out 泛化。",
+    "「能力保留」需逐层蒸馏：teacher 24 层 hidden 作监督，纯 SGC 层在真实语料上用 GPU 训练 + 配对 Wilson CI 验收；CPU 沙盒无此算力，本轮不伪造结果。",
+    "结论若为 False，按用户约定**不交付冒充品**，只给差距与路径。"
+  ],
+  "elapsed_s": 29.4
+}

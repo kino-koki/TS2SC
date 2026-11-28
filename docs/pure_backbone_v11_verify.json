@@ -1,0 +1,171 @@
+{
+  "schema": "TS2SC/pure-backbone-v11",
+  "architecture": "PURE_O1_SIMPLCORE_NO_ATTENTION",
+  "C1_routing_purity": {
+    "pure": true,
+    "n_mine": 243,
+    "n_teacher": 219,
+    "intersection": [],
+    "forbidden_in_mine": [],
+    "strict_mode": false,
+    "teacher_sha_set_size": 219,
+    "byte_collisions": [],
+    "name_namespace": "pure.* (zero overlap with LlamaForCausalLM)",
+    "teacher_attn_tensors": 96
+  },
+  "C2_operator_purity": {
+    "pure": true,
+    "banned_calls_found": [],
+    "attr_violations": [],
+    "has_kv_cache": false,
+    "note": "softmax 仅用于 FFN/SwiGLU 门控，不对 position 维度归一化"
+  },
+  "C3_O1_state": {
+    "bytes_at_L1": 2041973952,
+    "bytes_after_10m": 2041973952,
+    "constant": true,
+    "per_layer_bytes": 85082248,
+    "n_layers": 24,
+    "grows_with_L": false
+  },
+  "C4_10m_replay": {
+    "advanced": 10000000,
+    "elapsed_s": 0.0,
+    "state_bytes": 2041973952,
+    "post_10m_logits_finite": true,
+    "post_10m_generated": [
+      0,
+      78243,
+      6767,
+      2586,
+      124704,
+      119199,
+      120650,
+      122979,
+      128557
+    ],
+    "o1_closed_form": true,
+    "note": "advance_idle 为 O(1) 闭式：10M 与 L=1 耗时同量级"
+  },
+  "C5_no_fallback_to_attention": {
+    "core_off": {
+      "logits_max_abs_delta": 0.00012069754302501678,
+      "observable": true,
+      "finite": true,
+      "reversible_delta": 0.0,
+      "reversible": true,
+      "still_no_attention": true,
+      "error": null
+    },
+    "mix_off": {
+      "logits_max_abs_delta": 2.535991370677948e-06,
+      "observable": true,
+      "finite": true,
+      "reversible_delta": 0.0,
+      "reversible": true,
+      "still_no_attention": true,
+      "error": null
+    },
+    "gamma_off": {
+      "logits_max_abs_delta": 1.3802200555801392e-06,
+      "observable": true,
+      "finite": true,
+      "reversible_delta": 0.0,
+      "reversible": true,
+      "still_no_attention": true,
+      "error": null
+    },
+    "core_deletion_observable": true,
+    "mix_deletion_observable": true,
+    "gamma_deletion_observable": true,
+    "teacher_attn_tensors_in_chain": 0,
+    "passed": true,
+    "generation_base": [
+      0,
+      78243,
+      6767,
+      2586,
+      124704,
+      119199,
+      120650
+    ]
+  },
+  "C6_non_degenerate": {
+    "outputs": [
+      [
+        0,
+        78243,
+        6767,
+        2586,
+        124704,
+        119199,
+        120650,
+        122979,
+        128557,
+        96401,
+        37114,
+        37225,
+        3008
+      ],
+      [
+        1,
+        74572,
+        38009,
+        61398,
+        113306,
+        85540,
+        18869,
+        121621,
+        117259,
+        124997,
+        114048,
+        79391,
+        12612
+      ],
+      [
+        2,
+        104617,
+        61221,
+        110807,
+        74340,
+        60671,
+        113505,
+        46102,
+        23717,
+        88778,
+        89417,
+        64112,
+        116715
+      ]
+    ],
+    "distinct_outputs": 3,
+    "all_finite": true,
+    "min_len_ok": true,
+    "max_repeat_ratio": 0.0,
+    "non_degenerate": true
+  },
+  "C7_assert_pure": {
+    "pure": true,
+    "violations": [],
+    "n_layers": 24,
+    "forbidden": [
+      "self_attn",
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "rotary",
+      "rope",
+      "kv_cache",
+      "attn"
+    ]
+  },
+  "C8_long_range_decay": {
+    "psi_norm_at_tau0": 1.220281958580017,
+    "psi_norm_after_10m": 0.0,
+    "rho_power_10m": 0.0,
+    "frozen_kernel_decays_to_zero": true,
+    "note": "rho^L 在 10M 下溢；O(1) 状态恒定 ≠ 长程谱响应保留。这是衰减核的真实性质，不是 bug，也不声称长程记忆。"
+  },
+  "passed": true
+}
