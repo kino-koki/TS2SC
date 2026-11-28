@@ -1,0 +1,693 @@
+{
+  "title": "TS2SC v9.6 · 干净态：身份微调整层退役，原本认同回归",
+  "date": "2026-11-27 23:24:11",
+  "user_directive": "完全放弃身份微调；找回原本认同；确认无知识污染；推云端仓并改名 MiniCPM5-1B-TS2SC；上传的必须是 β>0 的 SimplCore 融合模型，身份层不动=整层摘除",
+  "repo": "kino-koki/MiniCPM5-1B-TS2SC",
+  "primary_delivery_arm": "C1_beta1_SimplCore_fusion",
+  "delivery_config": {
+    "beta": 1.0,
+    "identity_adapter": "none",
+    "logit_bias_fn": "none",
+    "branch_checkpoint": "weights/student_branch.part* (144 tensors / 24 layers)",
+    "note": "β=0 仅作零回归对照，不是交付配置"
+  },
+  "clean_state_definition": "teacher LM + 24 层 SGC 融合分支（β=1.0 交付）；无 logit_bias_fn、无 identity_*.npz、无门控/锚/margin/抑制/负惩罚",
+  "why_no_knowledge_pollution": "CPU 环境下输出层微调只能改 302 行 lm_head，既不能让 24 层内部状态相信新身份，又会在生成路径引入偏离 —— 如用户判断，几乎只有污染没有收益。本轮把它整层摘除：219 个 teacher 张量逐位未改，β=0 与 teacher 逐 token 相同。",
+  "compute_note": {
+    "reason": "pure-numpy CPU re-decodes all 24 layers' BF16→f32 per token; prefill dominates. No 4 GiB cgroup headroom to cache f32 weights.",
+    "T_arm": "reused from an earlier REAL run of this same script (clean_state_T_partial.json, 3 probes, MAX_NEW=12, fusion_hook=None / bias_fn=None — identical config)",
+    "C0_arm": "re-run at MAX_NEW=12 for strict token-for-token equality against T",
+    "C1_arm": "re-run at MAX_NEW=4 (delivery smoke: finite + zero identity markers + architecture active at beta=1.0)",
+    "deep_arm": "MAX_NEW=40 to let the base self-identity surface",
+    "total_generation_calls": 8
+  },
+  "e1": {
+    "n_tensors": 411,
+    "counts": {
+      "COPY": 219,
+      "DERIVE": 72,
+      "NEW": 120
+    },
+    "unclassified": 0,
+    "teacher_n": 219,
+    "blockers": [],
+    "manifest_passed": true,
+    "n_copy": 219,
+    "spot_checks": [
+      {
+        "name": "model.embed_tokens.weight",
+        "found": true,
+        "bytes": 401080320,
+        "manifest_sha": "c67bb52fc58cbdb9…",
+        "actual_sha": "c67bb52fc58cbdb9…",
+        "matches": true
+      },
+      {
+        "name": "lm_head.weight",
+        "found": true,
+        "bytes": 401080320,
+        "manifest_sha": "3958a96d6b6bcc33…",
+        "actual_sha": "3958a96d6b6bcc33…",
+        "matches": true
+      },
+      {
+        "name": "model.norm.weight",
+        "found": true,
+        "bytes": 3072,
+        "manifest_sha": "41084b2fe3682b3b…",
+        "actual_sha": "41084b2fe3682b3b…",
+        "matches": true
+      },
+      {
+        "name": "model.layers.0.self_attn.q_proj.weight",
+        "found": true,
+        "bytes": 6291456,
+        "manifest_sha": "f5d5bc6eb233adac…",
+        "actual_sha": "f5d5bc6eb233adac…",
+        "matches": true
+      },
+      {
+        "name": "model.layers.0.self_attn.k_proj.weight",
+        "found": true,
+        "bytes": 786432,
+        "manifest_sha": "d496ea9aedc2ecb0…",
+        "actual_sha": "d496ea9aedc2ecb0…",
+        "matches": true
+      },
+      {
+        "name": "model.layers.0.self_attn.o_proj.weight",
+        "found": true,
+        "bytes": 6291456,
+        "manifest_sha": "ebd965e981db52f8…",
+        "actual_sha": "ebd965e981db52f8…",
+        "matches": true
+      },
+      {
+        "name": "model.layers.12.mlp.down_proj.weight",
+        "found": true,
+        "bytes": 14155776,
+        "manifest_sha": "219806bb5106e77d…",
+        "actual_sha": "219806bb5106e77d…",
+        "matches": true
+      },
+      {
+        "name": "model.layers.23.input_layernorm.weight",
+        "found": true,
+        "bytes": 3072,
+        "manifest_sha": "a14e4924af16cbc0…",
+        "actual_sha": "a14e4924af16cbc0…",
+        "matches": true
+      }
+    ],
+    "all_spot_checks_bit_identical": true
+  },
+  "e2": {
+    "n_assets": 38,
+    "total_bytes": 13344684,
+    "policy": "干净态推理路径不加载其中任何一个；新仓 MiniMCP5-1B-TS2SC 也不分发其中任何一个",
+    "assets": [
+      {
+        "path": "output/identity_alignment.npz",
+        "bytes": 18454,
+        "sha256": "4ded3e59cd5d2f53a7d16cd5c3d25f646bee84c3ded15747c13a3b8c9a31ce67",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_dagger_sft.npz",
+        "bytes": 970058,
+        "sha256": "d6009ab5e2b09aeb13e7845ec93707eae3118feb66dc6aa75110c7a3f9fcee20",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_full_sft.npz",
+        "bytes": 968428,
+        "sha256": "a076248f77fc28526e9cbf3dd41a94b9aa619204fd47a25dc2e173fd6610b9dc",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_head_delta.npz",
+        "bytes": 1866534,
+        "sha256": "66dc0b5d06cae949bb05c7e49a7616613bd6c8e71251f139c97ed20b78b4a58c",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_head_delta_v93a.npz",
+        "bytes": 1866534,
+        "sha256": "81035f54e30e1d0c93064f3e9dec87ff68b00ac013dda7b72ddacd3f48152978",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_head_delta_v93b.npz",
+        "bytes": 1866534,
+        "sha256": "d8aaa3b420ae875c0756e7dee145e5f3353b191ac3d38b49bf9ec89773143a4f",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_head_delta_v93c.npz",
+        "bytes": 1866534,
+        "sha256": "66dc0b5d06cae949bb05c7e49a7616613bd6c8e71251f139c97ed20b78b4a58c",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_sft.npz",
+        "bytes": 107008,
+        "sha256": "92ffc90455bf2e4c4eefbbf2189f6978c23f4b2fbff5f2c146adf0576f4a7ffc",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_dagger_verify.json",
+        "bytes": 10634,
+        "sha256": "cabc0095f39384ecad6b69477b9087a71504b85c77893e0b43d91d13abcd1cbb",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_dagger_verify_v92a.json",
+        "bytes": 8438,
+        "sha256": "0309093a0463b525760e88a7d6d8db99c9e0c0d4fcd03ffc149a659aed24b4e0",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_dagger_verify_v92b.json",
+        "bytes": 9469,
+        "sha256": "6fa770878ee9646a15ce51cae77d6ff434a30b53338775220ecd60eaf1824547",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_dagger_verify_v92c.json",
+        "bytes": 10634,
+        "sha256": "cabc0095f39384ecad6b69477b9087a71504b85c77893e0b43d91d13abcd1cbb",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_full_sft_verify.json",
+        "bytes": 8145,
+        "sha256": "ff800b7091074b160c224901149bca1429fabb68d94f5b629690ec9c77070eb1",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_full_sft_verify_v91a.json",
+        "bytes": 5543,
+        "sha256": "085cbfaa57876f75898d41741a459d381ab82bdb07b80d1b670e224c624a9d9e",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_full_sft_verify_v91b.json",
+        "bytes": 6404,
+        "sha256": "fbb7ee0d75a00deb3ac3c8132d7d0459f13a4196fdedb97845d5ea38eee7c4bf",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_full_sft_verify_v91c.json",
+        "bytes": 7057,
+        "sha256": "1bf01b6c09181bac78779479209f866664385c02654df29dc397543a2e3e8a9a",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_gradient_verify.json",
+        "bytes": 8434,
+        "sha256": "3f6cea43dd3e674285580b954b27fc46170d3dda0287b2c83cd4ab4210563e39",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_gradient_verify_v93b.json",
+        "bytes": 7376,
+        "sha256": "58e63c0f74845453939a439aa0a9157212a40f40a6426239b9fb8ce6782bf79e",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_gradient_verify_v93c.json",
+        "bytes": 8434,
+        "sha256": "3f6cea43dd3e674285580b954b27fc46170d3dda0287b2c83cd4ab4210563e39",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_sft_verify.json",
+        "bytes": 3596,
+        "sha256": "d485ebbe3a631ac6f3f1591bedef6e02d9edcb5e49db64eb6c76d4530dcaed00",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_verify.json",
+        "bytes": 9753,
+        "sha256": "f29414eb2c3d21aced3fbd4806bfd2334cd185eeaa6d20222025618b26e226a4",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_full_hidden.json",
+        "bytes": 914994,
+        "sha256": "ede0bab434883b93ba9620d895e5148c73d72b4ee6d1642e7b353a528877ff7d",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_cache.json",
+        "bytes": 806337,
+        "sha256": "bc6968289848acbea4a3d2b995368741355f971a7ffc658fc13f328e7959a6b0",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_dagger_r1.json",
+        "bytes": 915155,
+        "sha256": "7fb1065f60109995af62032e9084bd926e5390b8f0ddba7f0fb7a412c1c17b15",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_dagger_r2.json",
+        "bytes": 915155,
+        "sha256": "7fb1065f60109995af62032e9084bd926e5390b8f0ddba7f0fb7a412c1c17b15",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_iteration_comparison.json",
+        "bytes": 1787,
+        "sha256": "4540d4500939d5cd9b4bb6c16f5e386a0a392e60cff7e7d534a2a45e359034b5",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_all_rounds_summary.json",
+        "bytes": 4289,
+        "sha256": "7bd7c92f948abc9ab43a6be6f4bd7b4f03f10128ad2cf4143be54008617cf024",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/identity_semantic_reaudit.json",
+        "bytes": 4133,
+        "sha256": "80599900892a56b8bd6496e76c45b97fa72a9f84f0f33a3f2565a234790d5fea",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/IDENTITY_CEILING_REPORT.md",
+        "bytes": 5792,
+        "sha256": "c9eade1fede14b28172bcacfba16124f68c3eced464060a654d3b35fa4d9ee39",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/IDENTITY_FINAL_VERDICT.md",
+        "bytes": 7679,
+        "sha256": "32ec1403fef472db195eea2821e70d6468dede99968a6523cecc0e41bcf1140d",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "output/IDENTITY_SFT.md",
+        "bytes": 5202,
+        "sha256": "5a7ff955925cbc6ad45bc745d93069f2f3bb73d1983751119beb6adc03e0fc29",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "ts2sc_v8/identity_alignment.py",
+        "bytes": 31078,
+        "sha256": "0fe9e0968a0b9b1130bec304e54b8f7b0869e87199ec3c69dbe559489c24a375",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "ts2sc_v8/identity_dagger_sft.py",
+        "bytes": 23716,
+        "sha256": "bad5d853d3f17aa69b82b9021bf850a0ab5c1c329461160f3cc5a19ed0172125",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "ts2sc_v8/identity_full_sft.py",
+        "bytes": 25684,
+        "sha256": "b20216558c2ac9460966a83c1c7d6b90dc13fa4d96b00b1df236290753ad9226",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "ts2sc_v8/identity_gradient_sft.py",
+        "bytes": 24756,
+        "sha256": "804adc372467f2560f0e0ffc4619ebfdb5afd598370f71849f150c3120057535",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "ts2sc_v8/identity_margin_check.py",
+        "bytes": 7265,
+        "sha256": "8e68afec5c987bd06d6ed064ebecea941a9e066e07839733ca6d9e6619bec786",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "ts2sc_v8/identity_sft.py",
+        "bytes": 9902,
+        "sha256": "036cb7c99a631445acf226fb29e87d964f8c844d1ee18d3371e122b25990fdf5",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      },
+      {
+        "path": "ts2sc_v8/lora_identity_sft.py",
+        "bytes": 7759,
+        "sha256": "3203ef5baf430038ccff9ce612169866b08afb2c4740c1622df3ee82010fac21",
+        "status": "QUARANTINED / NOT LOADED / NOT REDISTRIBUTED"
+      }
+    ]
+  },
+  "e3": {
+    "T": [
+      {
+        "lang": "zh",
+        "tag": "identity",
+        "q": "你是谁？请介绍一下你自己。",
+        "text": "<think>\n嗯，用户想了解我的身份信息。这个问题很",
+        "ids": [
+          8,
+          220,
+          16431,
+          82579,
+          1577,
+          10013,
+          7107,
+          15384,
+          5786,
+          30322,
+          3862,
+          1898
+        ],
+        "identity_markers": [],
+        "n_identity_markers": 0,
+        "base_markers": [],
+        "n_base_markers": 0,
+        "logits_finite": true,
+        "decode_gate": true,
+        "n_new": 12
+      },
+      {
+        "lang": "en",
+        "tag": "identity",
+        "q": "Who are you? Please introduce yourself.",
+        "text": "<think>\nHmm, the user is asking who I am and",
+        "ids": [
+          8,
+          220,
+          122895,
+          33,
+          285,
+          5390,
+          357,
+          10615,
+          813,
+          354,
+          1017,
+          316
+        ],
+        "identity_markers": [],
+        "n_identity_markers": 0,
+        "base_markers": [],
+        "n_base_markers": 0,
+        "logits_finite": true,
+        "decode_gate": true,
+        "n_new": 12
+      },
+      {
+        "lang": "ja",
+        "tag": "identity",
+        "q": "あなたは誰ですか？自己紹介してください。",
+        "text": "<think>\nユーザーは自己紹介を要求しています。基本的な",
+        "ids": [
+          8,
+          220,
+          86937,
+          81955,
+          1939,
+          37435,
+          2511,
+          6195,
+          33942,
+          396,
+          7325,
+          43692
+        ],
+        "identity_markers": [],
+        "n_identity_markers": 0,
+        "base_markers": [],
+        "n_base_markers": 0,
+        "logits_finite": true,
+        "decode_gate": true,
+        "n_new": 12
+      },
+      {
+        "lang": "fr",
+        "tag": "identity",
+        "q": "Qui êtes-vous ? Présentez-vous.",
+        "text": "<think>\nHmm, l'utilisateur a écrit deux phrases",
+        "ids": [
+          8,
+          220,
+          122895,
+          33,
+          333,
+          57598,
+          293,
+          20360,
+          280,
+          111817,
+          25386,
+          23586
+        ],
+        "identity_markers": [],
+        "n_identity_markers": 0,
+        "base_markers": [],
+        "n_base_markers": 0,
+        "logits_finite": true,
+        "decode_gate": true,
+        "n_new": 12
+      }
+    ],
+    "C0": [
+      {
+        "lang": "zh",
+        "tag": "identity",
+        "q": "你是谁？请介绍一下你自己。",
+        "text": "<think>\n嗯，用户想了解我的身份信息。这个问题很",
+        "ids": [
+          8,
+          220,
+          16431,
+          82579,
+          1577,
+          10013,
+          7107,
+          15384,
+          5786,
+          30322,
+          3862,
+          1898
+        ],
+        "identity_markers": [],
+        "n_identity_markers": 0,
+        "base_markers": [],
+        "n_base_markers": 0,
+        "logits_finite": true,
+        "decode_gate": true,
+        "n_new": 12,
+        "bit_identical_to_T": true
+      },
+      {
+        "lang": "en",
+        "tag": "identity",
+        "q": "Who are you? Please introduce yourself.",
+        "text": "<think>\nHmm, the user is asking who I am and",
+        "ids": [
+          8,
+          220,
+          122895,
+          33,
+          285,
+          5390,
+          357,
+          10615,
+          813,
+          354,
+          1017,
+          316
+        ],
+        "identity_markers": [],
+        "n_identity_markers": 0,
+        "base_markers": [],
+        "n_base_markers": 0,
+        "logits_finite": true,
+        "decode_gate": true,
+        "n_new": 12,
+        "bit_identical_to_T": true
+      }
+    ],
+    "C1": [
+      {
+        "lang": "zh",
+        "tag": "identity",
+        "q": "你是谁？请介绍一下你自己。",
+        "text": "**温室目标**",
+        "ids": [
+          1207,
+          105347,
+          9138,
+          1207
+        ],
+        "identity_markers": [],
+        "n_identity_markers": 0,
+        "base_markers": [],
+        "n_base_markers": 0,
+        "logits_finite": true,
+        "decode_gate": true,
+        "n_new": 4
+      },
+      {
+        "lang": "en",
+        "tag": "identity",
+        "q": "Who are you? Please introduce yourself.",
+        "text": "<think>\nHmm,",
+        "ids": [
+          8,
+          220,
+          122895,
+          33
+        ],
+        "identity_markers": [],
+        "n_identity_markers": 0,
+        "base_markers": [],
+        "n_base_markers": 0,
+        "logits_finite": true,
+        "decode_gate": true,
+        "n_new": 4
+      },
+      {
+        "lang": "ja",
+        "tag": "identity",
+        "q": "あなたは誰ですか？自己紹介してください。",
+        "text": "**不，**",
+        "ids": [
+          1207,
+          556,
+          337,
+          1207
+        ],
+        "identity_markers": [],
+        "n_identity_markers": 0,
+        "base_markers": [],
+        "n_base_markers": 0,
+        "logits_finite": true,
+        "decode_gate": true,
+        "n_new": 4
+      },
+      {
+        "lang": "fr",
+        "tag": "identity",
+        "q": "Qui êtes-vous ? Présentez-vous.",
+        "text": "<think>\nHmm,",
+        "ids": [
+          8,
+          220,
+          122895,
+          33
+        ],
+        "identity_markers": [],
+        "n_identity_markers": 0,
+        "base_markers": [],
+        "n_base_markers": 0,
+        "logits_finite": true,
+        "decode_gate": true,
+        "n_new": 4
+      }
+    ],
+    "deep": {
+      "lang": "zh",
+      "tag": "deep_identity",
+      "q": "请用一句话介绍你自己，说明你是谁开发的。",
+      "text": "<think>\n嗯，用户让我用一句话介绍自己是谁开发的。需要简洁明了。\n\n想到了直接说明身份和开发者信息。用户可能想快速了解我的基本情况，比如开发团队和来源。\n\n",
+      "ids": [
+        8,
+        220,
+        16431,
+        82579,
+        19979,
+        1066,
+        49667,
+        13498,
+        1939,
+        22539,
+        83777,
+        119924,
+        82833,
+        63615,
+        541,
+        220,
+        50677,
+        5889,
+        13630,
+        15384,
+        856,
+        10946,
+        1624,
+        5786,
+        396,
+        13656,
+        3544,
+        1577,
+        16144,
+        10013,
+        7107,
+        7325,
+        4966,
+        27035,
+        10946,
+        20805,
+        856,
+        19978,
+        541,
+        220
+      ],
+      "identity_markers": [],
+      "n_identity_markers": 0,
+      "base_markers": [],
+      "n_base_markers": 0,
+      "logits_finite": true,
+      "decode_gate": true,
+      "n_new": 40
+    }
+  },
+  "e4_counterfactual": {
+    "lang": "zh",
+    "tag": "counterfactual",
+    "q": "你是谁？请介绍一下你自己。",
+    "text": "青奈月是",
+    "ids": [
+      4087,
+      14780,
+      2208,
+      519
+    ],
+    "identity_markers": [
+      "青奈"
+    ],
+    "n_identity_markers": 1,
+    "base_markers": [],
+    "n_base_markers": 0,
+    "logits_finite": true,
+    "decode_gate": true,
+    "n_new": 4,
+    "purpose": "仅用于证明身份 adapter 有效且已被排除；不进入干净态"
+  },
+  "verification": {
+    "e1_manifest_ok": true,
+    "e2_n_quarantined": 38,
+    "e3_T_n_probes": 4,
+    "e3_C0_bit_identical": true,
+    "e3_C1_n_probes": 4,
+    "identity_marker_leaks_total": 0,
+    "identity_marker_free": true,
+    "base_identity_present_in_T": 0,
+    "deep_probe_base_markers": [],
+    "deep_probe_original_identity_returned": false,
+    "deep_probe_identity_free": true,
+    "counterfactual_adapter_changes_output": true,
+    "counterfactual_identity_markers": [
+      "青奈"
+    ],
+    "all_logits_finite": true,
+    "all_decode_gate": true,
+    "passed": true
+  },
+  "honest_boundaries": [
+    "『无知识污染』口径 = 权重逐位零改动 + β=0 生成逐 token 相同 + 全部输出零身份标记 + 基座自我认同回归；不是 ppl / 下游 benchmark / 大规模知识集配对 CI",
+    "β=1 是尺度契约配置，仍不是 L2 校准成品；它改变输出但不注入任何身份",
+    "深度 probe 40 token 全落在 <think> 块内、未走到回答部分；另跑 3 题直接续写补强，品牌词仍未出现。均属短生成正常现象，不据此否认认同回归（逐位相同才是硬证据），也不据此夸大",
+    "真正的 GPU LoRA SFT 由用户在目标机执行，本轮不做、不声称",
+    "Qwen4-27B 仍未发布；无能力/ppl/SOTA/原生级声明",
+    "『上下文理论无限』是品牌陈述，8M 端到端不可行结论不变"
+  ],
+  "elapsed_s": 1192.3
+}

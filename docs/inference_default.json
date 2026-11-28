@@ -1,0 +1,13 @@
+{
+  "schema": "TS2SC/inference-default-v9.6",
+  "model": "MiniCPM5-1B-TS2SC",
+  "beta": 1.0,
+  "beta_mode": "dimensionless scale contract (T1'), NOT L2-calibrated",
+  "sgc_branch": "weights/student_branch.part* -> reassemble.py",
+  "n_layers": 24,
+  "identity_adapter": "none",
+  "identity_assets": "RETIRED / not loaded / not part of this delivery",
+  "logit_bias_fn": "none",
+  "tokenizer": "upstream MiniCPM5-1B tokenizer.json (verbatim)",
+  "note": "β=0 仅用于逐位零回归对照；交付与默认推理均为 β=1.0"
+}
