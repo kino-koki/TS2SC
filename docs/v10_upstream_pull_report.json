@@ -1,0 +1,213 @@
+{
+  "upstream": "kino-koki/MiniCPM5-1B",
+  "head": "f0019e05f315",
+  "commit_date": "2026-11-01T12:08:57Z",
+  "commit_message": "MiniCPM5-1B model part 17-22 of 22",
+  "n_shards": 22,
+  "total_bytes": 2161290912,
+  "all_blob_sha_verified": true,
+  "shard_checks": [
+    {
+      "shard": 0,
+      "bytes": 99614720,
+      "upstream_blob_sha": "7ef8d687afad7539fb0f49536397b7b47e6cd638",
+      "computed_blob_sha": "7ef8d687afad7539fb0f49536397b7b47e6cd638",
+      "verified": true
+    },
+    {
+      "shard": 1,
+      "bytes": 99614720,
+      "upstream_blob_sha": "72daf9b02bbc24dd30dba9972ebdb3955f19a7f1",
+      "computed_blob_sha": "72daf9b02bbc24dd30dba9972ebdb3955f19a7f1",
+      "verified": true
+    },
+    {
+      "shard": 2,
+      "bytes": 99614720,
+      "upstream_blob_sha": "c1c230c7f12de9d080cba8eec86e2912d3e73f66",
+      "computed_blob_sha": "c1c230c7f12de9d080cba8eec86e2912d3e73f66",
+      "verified": true
+    },
+    {
+      "shard": 3,
+      "bytes": 99614720,
+      "upstream_blob_sha": "67bb87ed7ffc097c841e6af82a570b7cb9185242",
+      "computed_blob_sha": "67bb87ed7ffc097c841e6af82a570b7cb9185242",
+      "verified": true
+    },
+    {
+      "shard": 4,
+      "bytes": 99614720,
+      "upstream_blob_sha": "335c5158a0752c9dcb1529a1fd4df35994d13532",
+      "computed_blob_sha": "335c5158a0752c9dcb1529a1fd4df35994d13532",
+      "verified": true
+    },
+    {
+      "shard": 5,
+      "bytes": 99614720,
+      "upstream_blob_sha": "c5f673cb8ca43174cae8ba6514382127538075d7",
+      "computed_blob_sha": "c5f673cb8ca43174cae8ba6514382127538075d7",
+      "verified": true
+    },
+    {
+      "shard": 6,
+      "bytes": 99614720,
+      "upstream_blob_sha": "2b16af0c0038295a1055e3aadccaf764073abf2f",
+      "computed_blob_sha": "2b16af0c0038295a1055e3aadccaf764073abf2f",
+      "verified": true
+    },
+    {
+      "shard": 7,
+      "bytes": 99614720,
+      "upstream_blob_sha": "7de415c24f3368f26a1e9614d12d2ee795af8464",
+      "computed_blob_sha": "7de415c24f3368f26a1e9614d12d2ee795af8464",
+      "verified": true
+    },
+    {
+      "shard": 8,
+      "bytes": 99614720,
+      "upstream_blob_sha": "8d466fa383785b142e5cec3da680f01bc4a133f2",
+      "computed_blob_sha": "8d466fa383785b142e5cec3da680f01bc4a133f2",
+      "verified": true
+    },
+    {
+      "shard": 9,
+      "bytes": 99614720,
+      "upstream_blob_sha": "a45e5764c55c02cbc863b8f0271e00cd7bb05461",
+      "computed_blob_sha": "a45e5764c55c02cbc863b8f0271e00cd7bb05461",
+      "verified": true
+    },
+    {
+      "shard": 10,
+      "bytes": 99614720,
+      "upstream_blob_sha": "e4cdabf8536416904786b4b06dbea15d798809f9",
+      "computed_blob_sha": "e4cdabf8536416904786b4b06dbea15d798809f9",
+      "verified": true
+    },
+    {
+      "shard": 11,
+      "bytes": 99614720,
+      "upstream_blob_sha": "fc66a20b1314f40e7f2ac6739dfbf012eb25f46d",
+      "computed_blob_sha": "fc66a20b1314f40e7f2ac6739dfbf012eb25f46d",
+      "verified": true
+    },
+    {
+      "shard": 12,
+      "bytes": 99614720,
+      "upstream_blob_sha": "bfbbe1d453c1cd24fe510f9d1dc88293aba9e2c7",
+      "computed_blob_sha": "bfbbe1d453c1cd24fe510f9d1dc88293aba9e2c7",
+      "verified": true
+    },
+    {
+      "shard": 13,
+      "bytes": 99614720,
+      "upstream_blob_sha": "e26b67b13db3e7db23d080f6f0d403f8b28e00e6",
+      "computed_blob_sha": "e26b67b13db3e7db23d080f6f0d403f8b28e00e6",
+      "verified": true
+    },
+    {
+      "shard": 14,
+      "bytes": 99614720,
+      "upstream_blob_sha": "68fe1619110140613d9e234102b47ed174ccbf67",
+      "computed_blob_sha": "68fe1619110140613d9e234102b47ed174ccbf67",
+      "verified": true
+    },
+    {
+      "shard": 15,
+      "bytes": 99614720,
+      "upstream_blob_sha": "28a396b53ba71cdc27a6b8b893ff93e1cbe117fd",
+      "computed_blob_sha": "28a396b53ba71cdc27a6b8b893ff93e1cbe117fd",
+      "verified": true
+    },
+    {
+      "shard": 16,
+      "bytes": 99614720,
+      "upstream_blob_sha": "fa3f2ac7912c7af41181c480148b76c65525bef2",
+      "computed_blob_sha": "fa3f2ac7912c7af41181c480148b76c65525bef2",
+      "verified": true
+    },
+    {
+      "shard": 17,
+      "bytes": 99614720,
+      "upstream_blob_sha": "2c0d69f01989171693267486f99bffbf53f8afac",
+      "computed_blob_sha": "2c0d69f01989171693267486f99bffbf53f8afac",
+      "verified": true
+    },
+    {
+      "shard": 18,
+      "bytes": 99614720,
+      "upstream_blob_sha": "aa8558074cd8763610933ceee0822558edfde132",
+      "computed_blob_sha": "aa8558074cd8763610933ceee0822558edfde132",
+      "verified": true
+    },
+    {
+      "shard": 19,
+      "bytes": 99614720,
+      "upstream_blob_sha": "ff47328550e59431905ea9cb6e5e1454a8c6b73e",
+      "computed_blob_sha": "ff47328550e59431905ea9cb6e5e1454a8c6b73e",
+      "verified": true
+    },
+    {
+      "shard": 20,
+      "bytes": 99614720,
+      "upstream_blob_sha": "bd1ed729b32204e1d42d62e033f5dc35298ce7a4",
+      "computed_blob_sha": "bd1ed729b32204e1d42d62e033f5dc35298ce7a4",
+      "verified": true
+    },
+    {
+      "shard": 21,
+      "bytes": 69381792,
+      "upstream_blob_sha": "c1ab8f5920a730d5caabddab3899ca40ebfda1fc",
+      "computed_blob_sha": "c1ab8f5920a730d5caabddab3899ca40ebfda1fc",
+      "verified": true
+    }
+  ],
+  "small_files": {
+    "config.json": {
+      "bytes": 726,
+      "sha256": "6a6509b646cb3169616c5ffc3196e7ccaf9d4d6bc17b266581d241a31c217714",
+      "upstream_blob_sha": "e088beb7e7343bc5620ecd7618cebd255516879b",
+      "verified": true
+    },
+    "tokenizer.json": {
+      "bytes": 9894271,
+      "sha256": "3e065a558a034185fe299917b398685c1facd0169a9eea1e629eb30c171fed81",
+      "upstream_blob_sha": "ec0bf9a34dc884738494ed1f74d0c5327b06d690",
+      "verified": true
+    },
+    "model.safetensors.index.json": {
+      "bytes": 18004,
+      "sha256": "162add042e75abc3d571c4a8679523fa4f1ffc55d1fea25fc6658a19d6e957ee",
+      "upstream_blob_sha": "cf879b05899b5bc495992c2a7759b283957e573c",
+      "verified": true
+    },
+    "chat_template.jinja": {
+      "bytes": 9062,
+      "sha256": "7451a05cf1e28a79d97d7c0bc951028c0b1915119bf9046acd06a0e3d931f47c",
+      "upstream_blob_sha": "cb2934c459c6eff41b15e45bd6adc13c93846259",
+      "verified": true
+    },
+    "special_tokens_map.json": {
+      "bytes": 551,
+      "sha256": "82d96d7a9e6ced037f12394b7ea6a5b02e6ca87e0d11edaa8d60d9be857ce7db",
+      "upstream_blob_sha": "492d4b2966a1763442d426d880dbc29f94906e4c",
+      "verified": true
+    },
+    "tokenizer_config.json": {
+      "bytes": 94416,
+      "sha256": "094efb3cf1ff412284cc5945fc99dff58673a912760d04483a04aa1c716f66fd",
+      "upstream_blob_sha": "2a7bb43f24b04fc8e733b3af8c4ce73eaa974e9a",
+      "verified": true
+    },
+    "generation_config.json": {
+      "bytes": 213,
+      "sha256": "92afd6424501426eddcf7e1542f013d19e5987544977b4ee7bd26359bd5fd2ab",
+      "upstream_blob_sha": "73dc79c289226ae520cef51a057667aa3d958094",
+      "verified": true
+    }
+  },
+  "header_tensors": 219,
+  "data_start_offset": 25248,
+  "clean_definition": "every byte re-downloaded from upstream and matched against LIVE git blob sha1; no local cache or prior artifact was read",
+  "elapsed_s": 278.8
+}

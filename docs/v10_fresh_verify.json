@@ -1,0 +1,450 @@
+{
+  "title": "TS2SC v10 · 上游干净权重全量重迁移 + SimplCore 最新 SGC 外挂同步",
+  "date": "2026-11-28 08:32:06",
+  "user_directive": "严重污染问题 → 重新拉干净 1B 权重重新迁移；SimplCore 云端已更新，TS2SC 同步极大 SGC 外挂",
+  "what_was_wrong_and_fixed": {
+    "observation": "已发布仓仍带 33 个 identity_* 历史文件、weights/ 仍是 v8 架构分支；云端 SimplCore 已于 2026-11-27 推 v9–v11 SGC 冻结外挂补充包",
+    "fix": "全新隔离目录 v10_fresh/，零复用旧产物；22 分片逐片 git blob sha 校验重拉；分支改为 v10 四路径 sidecar；不删除任何云端条目（用户硬约束），新交付物以 v10 命名空间发布"
+  },
+  "upstream_simplcore": {
+    "repo": "kino-koki/SimplCore",
+    "head": "bec5ab8fd7",
+    "date": "2026-11-27T11:26:53Z",
+    "files": [
+      "repro/independent_v9_v11/sgc_sidecar_final.py",
+      "repro/independent_v9_v11/SGC冻结外挂_超越与不足_完整报告.md",
+      "repro/independent_v9_v11/README.md"
+    ],
+    "architecture": "FrozenSGC 静态核 + A 短卷积 + B CfC 液态门 + C Hadamard SE1 绑定，concat readout，绝不回写主干",
+    "honest_boundary": "上游 COMPLETE_BEYOND=False：质量轴稳态 parity，2× 对手步数对照失败、A2 负 delta 为崩坏区伪影；本轮只同步架构能力，不继承超越/SOTA 主张"
+  },
+  "pull": {
+    "upstream": "kino-koki/MiniCPM5-1B",
+    "head": "f0019e05f315",
+    "commit_date": "2026-11-01T12:08:57Z",
+    "commit_message": "MiniCPM5-1B model part 17-22 of 22",
+    "n_shards": 22,
+    "total_bytes": 2161290912,
+    "all_blob_sha_verified": true,
+    "shard_checks": [
+      {
+        "shard": 0,
+        "bytes": 99614720,
+        "upstream_blob_sha": "7ef8d687afad7539fb0f49536397b7b47e6cd638",
+        "computed_blob_sha": "7ef8d687afad7539fb0f49536397b7b47e6cd638",
+        "verified": true
+      },
+      {
+        "shard": 1,
+        "bytes": 99614720,
+        "upstream_blob_sha": "72daf9b02bbc24dd30dba9972ebdb3955f19a7f1",
+        "computed_blob_sha": "72daf9b02bbc24dd30dba9972ebdb3955f19a7f1",
+        "verified": true
+      },
+      {
+        "shard": 2,
+        "bytes": 99614720,
+        "upstream_blob_sha": "c1c230c7f12de9d080cba8eec86e2912d3e73f66",
+        "computed_blob_sha": "c1c230c7f12de9d080cba8eec86e2912d3e73f66",
+        "verified": true
+      },
+      {
+        "shard": 3,
+        "bytes": 99614720,
+        "upstream_blob_sha": "67bb87ed7ffc097c841e6af82a570b7cb9185242",
+        "computed_blob_sha": "67bb87ed7ffc097c841e6af82a570b7cb9185242",
+        "verified": true
+      },
+      {
+        "shard": 4,
+        "bytes": 99614720,
+        "upstream_blob_sha": "335c5158a0752c9dcb1529a1fd4df35994d13532",
+        "computed_blob_sha": "335c5158a0752c9dcb1529a1fd4df35994d13532",
+        "verified": true
+      },
+      {
+        "shard": 5,
+        "bytes": 99614720,
+        "upstream_blob_sha": "c5f673cb8ca43174cae8ba6514382127538075d7",
+        "computed_blob_sha": "c5f673cb8ca43174cae8ba6514382127538075d7",
+        "verified": true
+      },
+      {
+        "shard": 6,
+        "bytes": 99614720,
+        "upstream_blob_sha": "2b16af0c0038295a1055e3aadccaf764073abf2f",
+        "computed_blob_sha": "2b16af0c0038295a1055e3aadccaf764073abf2f",
+        "verified": true
+      },
+      {
+        "shard": 7,
+        "bytes": 99614720,
+        "upstream_blob_sha": "7de415c24f3368f26a1e9614d12d2ee795af8464",
+        "computed_blob_sha": "7de415c24f3368f26a1e9614d12d2ee795af8464",
+        "verified": true
+      },
+      {
+        "shard": 8,
+        "bytes": 99614720,
+        "upstream_blob_sha": "8d466fa383785b142e5cec3da680f01bc4a133f2",
+        "computed_blob_sha": "8d466fa383785b142e5cec3da680f01bc4a133f2",
+        "verified": true
+      },
+      {
+        "shard": 9,
+        "bytes": 99614720,
+        "upstream_blob_sha": "a45e5764c55c02cbc863b8f0271e00cd7bb05461",
+        "computed_blob_sha": "a45e5764c55c02cbc863b8f0271e00cd7bb05461",
+        "verified": true
+      },
+      {
+        "shard": 10,
+        "bytes": 99614720,
+        "upstream_blob_sha": "e4cdabf8536416904786b4b06dbea15d798809f9",
+        "computed_blob_sha": "e4cdabf8536416904786b4b06dbea15d798809f9",
+        "verified": true
+      },
+      {
+        "shard": 11,
+        "bytes": 99614720,
+        "upstream_blob_sha": "fc66a20b1314f40e7f2ac6739dfbf012eb25f46d",
+        "computed_blob_sha": "fc66a20b1314f40e7f2ac6739dfbf012eb25f46d",
+        "verified": true
+      },
+      {
+        "shard": 12,
+        "bytes": 99614720,
+        "upstream_blob_sha": "bfbbe1d453c1cd24fe510f9d1dc88293aba9e2c7",
+        "computed_blob_sha": "bfbbe1d453c1cd24fe510f9d1dc88293aba9e2c7",
+        "verified": true
+      },
+      {
+        "shard": 13,
+        "bytes": 99614720,
+        "upstream_blob_sha": "e26b67b13db3e7db23d080f6f0d403f8b28e00e6",
+        "computed_blob_sha": "e26b67b13db3e7db23d080f6f0d403f8b28e00e6",
+        "verified": true
+      },
+      {
+        "shard": 14,
+        "bytes": 99614720,
+        "upstream_blob_sha": "68fe1619110140613d9e234102b47ed174ccbf67",
+        "computed_blob_sha": "68fe1619110140613d9e234102b47ed174ccbf67",
+        "verified": true
+      },
+      {
+        "shard": 15,
+        "bytes": 99614720,
+        "upstream_blob_sha": "28a396b53ba71cdc27a6b8b893ff93e1cbe117fd",
+        "computed_blob_sha": "28a396b53ba71cdc27a6b8b893ff93e1cbe117fd",
+        "verified": true
+      },
+      {
+        "shard": 16,
+        "bytes": 99614720,
+        "upstream_blob_sha": "fa3f2ac7912c7af41181c480148b76c65525bef2",
+        "computed_blob_sha": "fa3f2ac7912c7af41181c480148b76c65525bef2",
+        "verified": true
+      },
+      {
+        "shard": 17,
+        "bytes": 99614720,
+        "upstream_blob_sha": "2c0d69f01989171693267486f99bffbf53f8afac",
+        "computed_blob_sha": "2c0d69f01989171693267486f99bffbf53f8afac",
+        "verified": true
+      },
+      {
+        "shard": 18,
+        "bytes": 99614720,
+        "upstream_blob_sha": "aa8558074cd8763610933ceee0822558edfde132",
+        "computed_blob_sha": "aa8558074cd8763610933ceee0822558edfde132",
+        "verified": true
+      },
+      {
+        "shard": 19,
+        "bytes": 99614720,
+        "upstream_blob_sha": "ff47328550e59431905ea9cb6e5e1454a8c6b73e",
+        "computed_blob_sha": "ff47328550e59431905ea9cb6e5e1454a8c6b73e",
+        "verified": true
+      },
+      {
+        "shard": 20,
+        "bytes": 99614720,
+        "upstream_blob_sha": "bd1ed729b32204e1d42d62e033f5dc35298ce7a4",
+        "computed_blob_sha": "bd1ed729b32204e1d42d62e033f5dc35298ce7a4",
+        "verified": true
+      },
+      {
+        "shard": 21,
+        "bytes": 69381792,
+        "upstream_blob_sha": "c1ab8f5920a730d5caabddab3899ca40ebfda1fc",
+        "computed_blob_sha": "c1ab8f5920a730d5caabddab3899ca40ebfda1fc",
+        "verified": true
+      }
+    ],
+    "small_files": {
+      "config.json": {
+        "bytes": 726,
+        "sha256": "6a6509b646cb3169616c5ffc3196e7ccaf9d4d6bc17b266581d241a31c217714",
+        "upstream_blob_sha": "e088beb7e7343bc5620ecd7618cebd255516879b",
+        "verified": true
+      },
+      "tokenizer.json": {
+        "bytes": 9894271,
+        "sha256": "3e065a558a034185fe299917b398685c1facd0169a9eea1e629eb30c171fed81",
+        "upstream_blob_sha": "ec0bf9a34dc884738494ed1f74d0c5327b06d690",
+        "verified": true
+      },
+      "model.safetensors.index.json": {
+        "bytes": 18004,
+        "sha256": "162add042e75abc3d571c4a8679523fa4f1ffc55d1fea25fc6658a19d6e957ee",
+        "upstream_blob_sha": "cf879b05899b5bc495992c2a7759b283957e573c",
+        "verified": true
+      },
+      "chat_template.jinja": {
+        "bytes": 9062,
+        "sha256": "7451a05cf1e28a79d97d7c0bc951028c0b1915119bf9046acd06a0e3d931f47c",
+        "upstream_blob_sha": "cb2934c459c6eff41b15e45bd6adc13c93846259",
+        "verified": true
+      },
+      "special_tokens_map.json": {
+        "bytes": 551,
+        "sha256": "82d96d7a9e6ced037f12394b7ea6a5b02e6ca87e0d11edaa8d60d9be857ce7db",
+        "upstream_blob_sha": "492d4b2966a1763442d426d880dbc29f94906e4c",
+        "verified": true
+      },
+      "tokenizer_config.json": {
+        "bytes": 94416,
+        "sha256": "094efb3cf1ff412284cc5945fc99dff58673a912760d04483a04aa1c716f66fd",
+        "upstream_blob_sha": "2a7bb43f24b04fc8e733b3af8c4ce73eaa974e9a",
+        "verified": true
+      },
+      "generation_config.json": {
+        "bytes": 213,
+        "sha256": "92afd6424501426eddcf7e1542f013d19e5987544977b4ee7bd26359bd5fd2ab",
+        "upstream_blob_sha": "73dc79c289226ae520cef51a057667aa3d958094",
+        "verified": true
+      }
+    },
+    "header_tensors": 219,
+    "data_start_offset": 25248,
+    "clean_definition": "every byte re-downloaded from upstream and matched against LIVE git blob sha1; no local cache or prior artifact was read",
+    "elapsed_s": 278.8
+  },
+  "branch": {
+    "path": "/data/workspace/output/v10_fresh/student_branch_v10.safetensors",
+    "n_tensors": 312,
+    "data_bytes": 45816000,
+    "header_bytes": 31304,
+    "file_bytes": 45847312,
+    "sha256": "1a96f234a50f9951f359941c2a84d278a52328573d5b0471c41e7ec0a3b85b3b"
+  },
+  "manifest": {
+    "n_tensors": 531,
+    "counts": {
+      "COPY": 219,
+      "DERIVE": 0,
+      "NEW": 312
+    },
+    "unclassified": 0,
+    "path": "/data/workspace/output/v10_fresh/student_full_manifest_v10.json"
+  },
+  "inference_default": {
+    "schema": "TS2SC/inference-default-v10",
+    "model": "MiniCPM5-1B-TS2SC",
+    "architecture": "SGC_V10_FROZEN_3SIDECAR",
+    "beta": 1.0,
+    "beta_mode": "dimensionless scale contract (T1'), NOT L2-calibrated",
+    "branch_checkpoint": "student_branch_v10.safetensors / weights/*.part",
+    "n_layers": 24,
+    "n_new_tensors": 312,
+    "identity_adapter": "none (RETIRED, never loaded)",
+    "logit_bias_fn": "none",
+    "sidecars": [
+      "A 3-layer k=7 gated short conv",
+      "B CfC liquid gate (tau=2)",
+      "C Hadamard SE1 content-addressed binding"
+    ],
+    "frozen_core": "rho^tau*sin((tau+1)theta), FFT<->IIR, O(1) state",
+    "note": "beta=0 is bit-identical control only; delivery = beta=1.0"
+  },
+  "architecture_checks": {
+    "fft_iir_duality": 1.6901261971288176e-14,
+    "se1": {
+      "on_orth": 0.0,
+      "off_orth": 0.0,
+      "on_decay_err": 3.3306690738754696e-16,
+      "off_decay": 3.885780586188048e-16,
+      "rho": 0.9995
+    },
+    "shortconv_stream_vs_full": 8.326672684688674e-17,
+    "cfc_state_norm": 4.714951628364674,
+    "core_unchanged_by_sidecars": {
+      "steps": 6,
+      "max_abs_delta": 0.0,
+      "passed": true
+    },
+    "purity_audit": {
+      "allowed_mixers": [
+        "sgc",
+        "sgc-nogate",
+        "sgc-nolocal",
+        "srf"
+      ],
+      "forbidden_defs": [],
+      "passed": true,
+      "note": "AST 只看定义名；注释里的审计词表不计"
+    },
+    "beta0_delta_is_zero": true,
+    "beta1_contract": 0.10000000149011612,
+    "o1_state_bytes": 46656,
+    "state_bytes_vs_L": [
+      46656,
+      46656,
+      46656
+    ]
+  },
+  "copy_spot_checks": [
+    {
+      "name": "model.embed_tokens.weight",
+      "bytes": 401080320,
+      "matches": true
+    },
+    {
+      "name": "lm_head.weight",
+      "bytes": 401080320,
+      "matches": true
+    },
+    {
+      "name": "model.norm.weight",
+      "bytes": 3072,
+      "matches": true
+    },
+    {
+      "name": "model.layers.0.self_attn.q_proj.weight",
+      "bytes": 6291456,
+      "matches": true
+    },
+    {
+      "name": "model.layers.0.self_attn.k_proj.weight",
+      "bytes": 786432,
+      "matches": true
+    },
+    {
+      "name": "model.layers.12.mlp.down_proj.weight",
+      "bytes": 14155776,
+      "matches": true
+    },
+    {
+      "name": "model.layers.23.input_layernorm.weight",
+      "bytes": 3072,
+      "matches": true
+    },
+    {
+      "name": "model.layers.23.self_attn.o_proj.weight",
+      "bytes": 6291456,
+      "matches": true
+    }
+  ],
+  "generation": [
+    {
+      "lang": "zh",
+      "q": "你是谁？请介绍一下你自己。",
+      "beta0": {
+        "text": "<think>\n嗯，用户",
+        "ids": [
+          8,
+          220,
+          16431,
+          82579
+        ],
+        "finite": true,
+        "gate": true
+      },
+      "beta1": {
+        "text": "<think>\n用户要求",
+        "ids": [
+          8,
+          220,
+          13656,
+          6195
+        ],
+        "finite": true,
+        "gate": true
+      },
+      "beta1_identity_markers": [],
+      "beta0_identity_markers": [],
+      "architecture_active": true
+    },
+    {
+      "lang": "en",
+      "q": "Who are you?",
+      "beta0": {
+        "text": "<think>\nHmm,",
+        "ids": [
+          8,
+          220,
+          122895,
+          33
+        ],
+        "finite": true,
+        "gate": true
+      },
+      "beta1": {
+        "text": "<think>\nThe user",
+        "ids": [
+          8,
+          220,
+          608,
+          5390
+        ],
+        "finite": true,
+        "gate": true
+      },
+      "beta1_identity_markers": [],
+      "beta0_identity_markers": [],
+      "architecture_active": true
+    }
+  ],
+  "verification": {
+    "pull_all_blob_sha_verified": true,
+    "pull_n_shards": 22,
+    "manifest_unclassified": 0,
+    "manifest_counts": {
+      "COPY": 219,
+      "DERIVE": 0,
+      "NEW": 312
+    },
+    "copy_spot_checks_ok": true,
+    "fft_iir_duality": 1.6901261971288176e-14,
+    "se1_on_orth": 0.0,
+    "se1_off_orth": 0.0,
+    "se1_decay_err": 3.3306690738754696e-16,
+    "shortconv_stream_vs_full": 8.326672684688674e-17,
+    "core_unchanged_by_sidecars": true,
+    "purity_audit_passed": true,
+    "beta0_delta_is_zero": true,
+    "beta1_contract_ratio": 0.1,
+    "state_bytes_vs_L": [
+      46656,
+      46656,
+      46656
+    ],
+    "o1_state": true,
+    "all_generation_finite": true,
+    "all_decode_gate": true,
+    "identity_marker_leaks": 0,
+    "architecture_active_in_all_probes": true,
+    "passed": true
+  },
+  "honest_boundaries": [
+    "『干净』口径 = 22 分片逐片 LIVE git blob sha1 校验重拉 + COPY sha256 从新字节计算 + NEW 参数零复用旧产物；不是 ppl / 下游 benchmark 知识集配对 CI",
+    "β=1 是尺度契约配置，不是 L2 校准成品；β_l 仍待校准",
+    "上游 v9–v11 结论为否定性（COMPLETE_BEYOND=False），无 SOTA/超越声明",
+    "上游语料 240KB / D=32 / L≤1536；1B / 中文 / LRA / 长文档未测",
+    "无 torch / GPU；纯 numpy CPU；生成 probe 仅 4 token",
+    "Qwen4-27B 仍未发布；『上下文理论无限』是品牌陈述非实测",
+    "未删除任何云端条目；identity_* 历史文件保留但 RETIRED / 不加载"
+  ],
+  "elapsed_s": 660.3
+}

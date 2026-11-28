@@ -1,0 +1,59 @@
+{
+  "upstream": "kino-koki/SimplCore",
+  "head": "bec5ab8fd7",
+  "date": "2026-11-27T11:26:53Z",
+  "files": {
+    "simplcore/core/arch/sgc.py": {
+      "bytes": 87614,
+      "sha256": "64b2c8b072c201800fc964991288517029485280fe4a3316e4cf2e78b1f1bb79"
+    },
+    "simplcore/core/arch/bsgc.py": {
+      "bytes": 24091,
+      "sha256": "915b8c6a90b222a15fdf94fbc121b5772c46b72cd2446edd98e73d47309819ea"
+    },
+    "simplcore/core/arch/snn_sgc.py": {
+      "bytes": 8113,
+      "sha256": "b90c99980e6c8225f24bce7f0ae2b40ea5155827102c86bbac83b34141596b51"
+    },
+    "simplcore/core/arch/evolution_mixer.py": {
+      "bytes": 15968,
+      "sha256": "a78b973fc3043b0157f2184fb5a3ee385a91ff10c7fedfd10c7a35bd2a1f8ffe"
+    },
+    "simplcore/core/arch/purity.py": {
+      "bytes": 15340,
+      "sha256": "6159803744863ab48a3fa9eb067eb9f771a8d5b7642816e14a33755cc4e804cf"
+    },
+    "repro/independent_v9_v11/sgc_sidecar_final.py": {
+      "bytes": 43971,
+      "sha256": "b8d8e222daaaea53f904ab181c68491828744bf37039b63701efd7a2abd3a21c"
+    },
+    "repro/independent_v9_v11/complete_beyond_v9.py": {
+      "bytes": 34715,
+      "sha256": "d82f6123021a5360a55a15fe5827909714474522510f04ec8100d9ed4d4fd93e"
+    },
+    "repro/independent_v9_v11/v11_alibi.py": {
+      "bytes": 11335,
+      "sha256": "d04a4f37fa8e5d5c0089a4832680ed47678a48daf8045fb1add7727e5c1e1e1e"
+    },
+    "repro/independent_v9_v11/repo_simplcore_core_arch_purity.py": {
+      "bytes": 15340,
+      "sha256": "6159803744863ab48a3fa9eb067eb9f771a8d5b7642816e14a33755cc4e804cf"
+    },
+    "repro/independent_v9_v11/README.md": {
+      "bytes": 6909,
+      "sha256": "2e6726d6f148721e4c77c860c6955b9773c4592ee80d2ee100bd3de877d881fd"
+    },
+    "repro/independent_v9_v11/SGC冻结外挂_超越与不足_完整报告.md": {
+      "bytes": 12766,
+      "sha256": "f5ecf69bf1aa32dac1f07810f34c384b824e9c63a1ab912d27c97261f666b751"
+    },
+    "repro/independent_v9_v11/本地极限优化_最终报告.md": {
+      "bytes": 7618,
+      "sha256": "a99fed0268de8a04de82654fb26559875afefb9b57c40b7f1b1fe156c52193f9"
+    },
+    "repro/independent_v9_v11/完全超越_最终边界报告.md": {
+      "bytes": 10398,
+      "sha256": "9ed25e30a69ad3d728b57ea4e7978503b1c66817d453afd5394ed871b901ca77"
+    }
+  }
+}
