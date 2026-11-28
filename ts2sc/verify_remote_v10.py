@@ -247,7 +247,7 @@ def main():
 
     print("\n=== 9 回归 ===")
     import subprocess
-    for name in ("test_v8.py", "test_v10.py"):
+    for name in ("test_v8.py", "test_v10.py", "test_v10_3.py"):
         r = subprocess.run([sys.executable, f"/data/workspace/ts2sc_v8/{name}"],
                            capture_output=True, text=True, timeout=120)
         line = [l for l in r.stdout.splitlines() if l.startswith("[report]")]
