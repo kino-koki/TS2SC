@@ -56,6 +56,12 @@ v11 只看 delta 的 A2 判据 → 加「赢所在 L 上 S 的 bpc 劣化 ≤ +1
 | **P-pure** | 纯 O(1) 无注意力主干 C1–C8 全绿（无 QKV/KV cache、10M 常驻、删外挂不退化） | `VERIFIED`（v11） | 任一 C 判据失败、或推理链出现 self_attn 张量即证伪 | `pure_backbone_v11_verify.json` / `PURE_BACKBONE_V11.md` |
 | **P-native-ability** | 非 hybrid + 原生 + 严格保留原模型能力，三者**不训练不可同时成立** | `FALSIFIED_AS_CLAIM` / `ABILITY_PRESERVED=False`（v11 实测） | 若 held-out cos ≥0.90 且 argmax 一致率 ≥0.90 即推翻本判定 | `ability_preservation_verdict.json`：原始 cos −0.0138、argmax 0/6、ridge held-out 0.7612、前缀坍缩 cos 0.999999 |
 | **P-distill** | 逐层蒸馏是唯一路径；训练后纯度 C1–C8 必须仍全绿 | `NOT_EXECUTED`（需 GPU） | 训练后任一验收门槛不达标即证伪 | `DISTILL_PROTOCOL.md`（无 checkpoint / 无分数，不伪造） |
+| **P-v12-subst** | 96 个 self_attn 从推理链摘除、123 个非注意力张量逐位继承、无 `T(x)` 残差 ⇒ 非 hybrid 算子替换成立 | `VERIFIED`（v12） | 运行期加载任一 self_attn、或任一继承张量 sha 不符即证伪 | `V12_NATIVE_MIGRATION_VERDICT.json`：loaded_self_attn=0、sha_checked=123、mismatch=[] |
+| **P-v12-ability** | 随机谱核 readout 的算子替换能保留原能力 | `FALSIFIED`（v12 实测） | 若 cos≥0.90 且 argmax≥5/6 即推翻 | cos 0.0391、argmax 0/6、top5 0.0、文本乱码 |
+| **P-v12_1-analytic** | 用 teacher 每层 `(h,a)` 闭式拟合静态读出 `W_l` + 解析 `γ_l` 能跨过能力差距 | `FALSIFIED`（v12.1 实测） | 若端到端 cos≥0.90 且 held-out≥0.80 即推翻 | train cos 0.999668、端到端 0.1150、heldout 0.0764、argmax 1/8 |
+| **P-drift** | teacher-forced 拟合崩于 24 层高增益读出的 exposure 放大，不是 λ/γ 调参问题 | `VERIFIED`（数值闭环） | 若放大上界与实测 cos 不吻合即证伪 | `V12_1_DRIFT_DIAGNOSIS.json`：谱范数 mean 20.04/max 53.23、1e-3 噪声放大 39.2×、`(1.1)^24=9.85×` ⇒ cos 上界 0.102 vs 实测 0.115 |
+| **P-structural** | 「逐位摘除注意力 + 不重新求参数 + 保留原能力」因状态空间不同构而不可同时成立；on-policy 配对监督在分叉后不存在 | `ARGUED + 4-round evidence` | 若出现无需序列级重训即可 cos≥0.90 的非 hybrid 方案即证伪 | `NATIVE_MIGRATION_FINAL.md` §3 |
+| **P-onpolicy-distill** | 唯一路径 = student 函数类内 scheduled-sampling / on-policy 序列级训练；CPU 无算力 | `NOT_EXECUTED` | 训练后七道门槛任一不达标即证伪 | `DISTILL_PROTOCOL.md` + `NATIVE_MIGRATION_FINAL.md` §4 |
 
 ---
 
@@ -146,6 +152,10 @@ SMM 来自上游真实源码 `evolution_mixer.py` 的 `FusedEvolutionMixer` /
 - ❌ 「纯主干已保留原模型能力」——`ABILITY_PRESERVED=False`，前缀信息坍缩
 - ❌ 「线性 ridge 对齐 = 能力迁移」——held-out 0.7612 < 0.90，只是插值上界
 - ❌ 「CPU 沙盒已跑完蒸馏」——`NOT_EXECUTED`，无 checkpoint / 无分数
+- ❌ 「v12 算子替换已保留原能力」——cos 0.0391、argmax 0/6、文本乱码
+- ❌ 「train cos 0.9997 = 迁移成功」——那是 teacher-forced，端到端 0.1150
+- ❌ 「解析拟合/调 γ/调 λ 可以绕过 GPU 蒸馏」——放大上界 0.102 与实测 0.115 闭环
+- ❌ 「v12.1 是 hybrid」——它是非 hybrid 算子替换，只是能力没保住，两者别混
 
 **允许写**：`β=0 逐位零回归`、`219/219 COPY 全量逐位一致`、
 `FFT↔IIR 1.69e−14`、`O(1) 定态`、`P7 主干不回写`、

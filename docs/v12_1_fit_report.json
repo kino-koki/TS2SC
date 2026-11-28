@@ -1,0 +1,257 @@
+{
+  "title": "v12.1 解析算子迁移 · 闭式拟合报告",
+  "date": "2026-11-28 21:55:05",
+  "method": "teacher 每层 attention (h,a) + 冻结谱核读出 u → 闭式 ridge 静态读出投影 W_l；无反向传播、无蒸馏、无 hybrid",
+  "n_fit_prompts": 7,
+  "n_heldout": 1,
+  "n_layers": 24,
+  "r": 96,
+  "lam": 0.01,
+  "gamma_l": [
+    0.265621,
+    0.156631,
+    0.187374,
+    0.197483,
+    0.321231,
+    0.274401,
+    0.357191,
+    0.382767,
+    0.5,
+    0.492953,
+    0.432684,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5
+  ],
+  "gamma_mean": 0.419514,
+  "fixed_beta_BETA": 0.1,
+  "W_shape": [
+    24,
+    192,
+    1536
+  ],
+  "layer_stats": [
+    {
+      "layer": 0,
+      "n_samples": 114,
+      "train_cos_mean": 0.995919,
+      "train_cos_min": 0.975185,
+      "gamma_l": 0.265621,
+      "ratio_median_raw": 0.265621
+    },
+    {
+      "layer": 1,
+      "n_samples": 114,
+      "train_cos_mean": 0.997775,
+      "train_cos_min": 0.976695,
+      "gamma_l": 0.156631,
+      "ratio_median_raw": 0.156631
+    },
+    {
+      "layer": 2,
+      "n_samples": 114,
+      "train_cos_mean": 0.999741,
+      "train_cos_min": 0.996011,
+      "gamma_l": 0.187374,
+      "ratio_median_raw": 0.187374
+    },
+    {
+      "layer": 3,
+      "n_samples": 114,
+      "train_cos_mean": 0.999679,
+      "train_cos_min": 0.996051,
+      "gamma_l": 0.197483,
+      "ratio_median_raw": 0.197483
+    },
+    {
+      "layer": 4,
+      "n_samples": 114,
+      "train_cos_mean": 0.999713,
+      "train_cos_min": 0.996632,
+      "gamma_l": 0.321231,
+      "ratio_median_raw": 0.321231
+    },
+    {
+      "layer": 5,
+      "n_samples": 114,
+      "train_cos_mean": 0.999933,
+      "train_cos_min": 0.999508,
+      "gamma_l": 0.274401,
+      "ratio_median_raw": 0.274401
+    },
+    {
+      "layer": 6,
+      "n_samples": 114,
+      "train_cos_mean": 0.99986,
+      "train_cos_min": 0.998202,
+      "gamma_l": 0.357191,
+      "ratio_median_raw": 0.357191
+    },
+    {
+      "layer": 7,
+      "n_samples": 114,
+      "train_cos_mean": 0.999905,
+      "train_cos_min": 0.999032,
+      "gamma_l": 0.382767,
+      "ratio_median_raw": 0.382767
+    },
+    {
+      "layer": 8,
+      "n_samples": 114,
+      "train_cos_mean": 0.99993,
+      "train_cos_min": 0.999262,
+      "gamma_l": 0.5,
+      "ratio_median_raw": 0.550108
+    },
+    {
+      "layer": 9,
+      "n_samples": 114,
+      "train_cos_mean": 0.999955,
+      "train_cos_min": 0.999735,
+      "gamma_l": 0.492953,
+      "ratio_median_raw": 0.492953
+    },
+    {
+      "layer": 10,
+      "n_samples": 114,
+      "train_cos_mean": 0.999972,
+      "train_cos_min": 0.999818,
+      "gamma_l": 0.432684,
+      "ratio_median_raw": 0.432684
+    },
+    {
+      "layer": 11,
+      "n_samples": 114,
+      "train_cos_mean": 0.999926,
+      "train_cos_min": 0.999579,
+      "gamma_l": 0.5,
+      "ratio_median_raw": 0.502688
+    },
+    {
+      "layer": 12,
+      "n_samples": 114,
+      "train_cos_mean": 0.999973,
+      "train_cos_min": 0.999853,
+      "gamma_l": 0.5,
+      "ratio_median_raw": 0.773048
+    },
+    {
+      "layer": 13,
+      "n_samples": 114,
+      "train_cos_mean": 0.999959,
+      "train_cos_min": 0.999742,
+      "gamma_l": 0.5,
+      "ratio_median_raw": 0.639847
+    },
+    {
+      "layer": 14,
+      "n_samples": 114,
+      "train_cos_mean": 0.999982,
+      "train_cos_min": 0.999927,
+      "gamma_l": 0.5,
+      "ratio_median_raw": 0.610322
+    },
+    {
+      "layer": 15,
+      "n_samples": 114,
+      "train_cos_mean": 0.999963,
+      "train_cos_min": 0.999765,
+      "gamma_l": 0.5,
+      "ratio_median_raw": 0.690497
+    },
+    {
+      "layer": 16,
+      "n_samples": 114,
+      "train_cos_mean": 0.999982,
+      "train_cos_min": 0.999908,
+      "gamma_l": 0.5,
+      "ratio_median_raw": 0.601355
+    },
+    {
+      "layer": 17,
+      "n_samples": 114,
+      "train_cos_mean": 0.999983,
+      "train_cos_min": 0.999889,
+      "gamma_l": 0.5,
+      "ratio_median_raw": 0.611806
+    },
+    {
+      "layer": 18,
+      "n_samples": 114,
+      "train_cos_mean": 0.999956,
+      "train_cos_min": 0.999598,
+      "gamma_l": 0.5,
+      "ratio_median_raw": 0.64834
+    },
+    {
+      "layer": 19,
+      "n_samples": 114,
+      "train_cos_mean": 0.999994,
+      "train_cos_min": 0.999936,
+      "gamma_l": 0.5,
+      "ratio_median_raw": 0.613224
+    },
+    {
+      "layer": 20,
+      "n_samples": 114,
+      "train_cos_mean": 0.999973,
+      "train_cos_min": 0.999702,
+      "gamma_l": 0.5,
+      "ratio_median_raw": 0.507192
+    },
+    {
+      "layer": 21,
+      "n_samples": 114,
+      "train_cos_mean": 0.999989,
+      "train_cos_min": 0.999913,
+      "gamma_l": 0.5,
+      "ratio_median_raw": 1.244294
+    },
+    {
+      "layer": 22,
+      "n_samples": 114,
+      "train_cos_mean": 0.999988,
+      "train_cos_min": 0.999922,
+      "gamma_l": 0.5,
+      "ratio_median_raw": 1.195054
+    },
+    {
+      "layer": 23,
+      "n_samples": 114,
+      "train_cos_mean": 0.999984,
+      "train_cos_min": 0.999838,
+      "gamma_l": 0.5,
+      "ratio_median_raw": 1.006341
+    }
+  ],
+  "train_cos_mean_all_layers": 0.999668,
+  "teacher_all_live_blob_sha_verified": true,
+  "invariants": {
+    "spectral_A_frozen": true,
+    "B_frozen": true,
+    "C_frozen": true,
+    "W_only_in_readout": true,
+    "no_QKV": true,
+    "no_SDPA": true,
+    "no_KV_cache": true,
+    "no_Tx_residual": true,
+    "O1_state": true,
+    "Toeplitz_FFT_IIR_preserved": true
+  },
+  "honest_boundaries": [
+    "拟合是 teacher-forced（用 teacher 的 h_l），推理时残差流会漂移；是否真的保留端到端能力必须由验证阶段 hidden cos / argmax 判定，本拟合报告**不声称**能力已保留。",
+    "held-out prompt 不进拟合；验证阶段单独报告 held-out 指标。",
+    "仍无 ppl / benchmark / 配对 Wilson CI；全分布能力保留仍需 DISTILL_PROTOCOL.md 的 GPU 蒸馏。"
+  ],
+  "elapsed_s": 1159.9
+}
