@@ -1,0 +1,106 @@
+# TS2SC v10 · 可证伪台账（防 overclaim 闸门）
+
+日期：2026-11-28 · 上游：`kino-koki/SimplCore` @ `bec5ab8fd7`
+
+> **这不是结论表。** 它登记的是「哪些命题还没被证、哪些已被上游证伪、
+> 哪些话永远不许写」。每一条都给证伪条件与所需实验，供后续 GPU 工作逐条销账。
+> 目的只有一个：v10 同步了上游**架构能力**，但绝不顺手继承上游**没有拿到的主张**。
+
+---
+
+## 0. 上游 v11 已经替我们证伪的两条（必须随 v10 一起读）
+
+上游 `repro/independent_v9_v11/README.md` 头部写明：
+`MECHANICAL_COMPLETE = False` / `HONEST_COMPLETE = False` / `COMPLETE_BEYOND = False`。
+质量轴只到**稳态 parity**（A1 +0.0029、A3 +0.0012 bpc @6000 步，3 seeds），
+两条独立否决：
+
+| # | 否决理由 | 原始数字 |
+|---|---|---|
+| V1 | **2× 对手步数对照失败** | s11 A1 +0.1156、s22 +0.1835 超阈值 → `fair_all=False`；机械判定本身也是 False |
+| V2 | **A2 的负 delta 全是崩坏区伪影** | 所有「赢」落在 L768/L1536，两臂 bpc 相对 L48 基线劣化 +1.2~+7.7，「双方都崩、S 崩得稍慢」；加绝对质量约束后 `effA2min` +0.0068~+0.1494，稳定区间归 0 |
+
+另有**三次自我推翻**（v1 A3 假赢、`final_decisive` 的「纯结构上限」、v6 的
+「M=512 parity」）与**两次抓到的假胜**（α=0.75 只加 SGC 臂 → 两臂共享 Block 后归零；
+v11 只看 delta 的 A2 判据 → 加「赢所在 L 上 S 的 bpc 劣化 ≤ +1.0」收紧）全部留档。
+
+**结论**：上游在纯度内自由度已穷举、按 v11 头部停止准则收束。
+要全轴赢必须放弃静态 Toeplitz / O(1) 定态 / 纯度三者之一 ——
+任取一条即不再属于该仓库定义的架构。这是**定义性边界，不是工程未及**。
+
+> TS2SC v10 把这套外挂挂到 1B teacher 上，**不改变这个边界**。
+> 下面每一条命题都带着它。
+
+---
+
+## 1. 命题登记（9 条）
+
+| ID | 命题 | 当前状态 | 证伪条件 | 所需实验 |
+|---|---|---|---|---|
+| **P-β** | 24 个逐层 `β_l ∈ [0,1]` 经 L2 校准后，存在 ≥1 层最优 `β_l = 0` | `NOT_TESTED` | 若某层最优 β_l=0，则该层特性只是「登记可用、实际未启用」 | teacher 同条件 forward + 逐层 hidden cos / logit KL + 网格 |
+| **P-2×** | v10 在等算力 2× 对手步数下仍保持 parity | `NOT_TESTED`（上游已 `FALSIFIED`） | 复现 V1 即证伪；不得沿用上游 parity 数字 | 1B 级等算力双跑 + 配对 CI |
+| **P-A2** | v10 在 OOD 长 L 上的负 delta 不是崩坏区伪影 | `NOT_TESTED`（上游已 `FALSIFIED`） | 加绝对质量约束后稳定区间仍归 0 即证伪 | L384/768/1536 + 绝对 bpc 约束 |
+| **P-8M** | 8M token 端到端可行 | `PARTIAL_FALSIFIED` | 当前 hybrid 保留 teacher 全注意力：192 GiB KV + 10^16.1 对 + 64× RoPE 外推 ⇒ 不可行 | 只有 W=4096 滑窗可降到 96 MiB，但**撞「融合不替换」红线** |
+| **P-O1** | 24 层 SGC 分支状态与 L 无关 | `VERIFIED`（v10） | L=1/8/64 恒 46,656 B/层；状态出现 L 维即证伪 | 已 `test_v10.py::test_11` |
+| **P-P7** | 三条旁路不回写冻结主干 | `VERIFIED`（v10） | 旁路全开/全关主干快照 `max\|Δ\|>0` 即证伪 | 已 `test_v10.py::test_07` |
+| **P-β0** | β=0 与纯 teacher 端到端逐 token 相同 | `VERIFIED`（本轮深审） | 任一 token 不同即证伪 | 4 语言中 zh/en 双跑 T vs C0 |
+| **P-quality** | v10 的 6-token 生成可读 ⇒ 质量/能力不降 | `NOT_TESTED` | 短生成全落在 `<think>` 或答错即不能升级为质量主张 | ppl / 下游集 / 配对 Wilson CI（**纯 CPU 不做**） |
+| **P-identity** | 身份层退役后模型「原生级 / 能力更强」 | `NOT_CLAIMABLE` | 任何此类句子都需 GPU LoRA SFT + 配对 CI；CPU 输出层微调已知几乎只有污染 | 用户目标机自跑 |
+
+---
+
+## 1b. 本轮深审的一处未满分观察（不洗白）
+
+`v10_multilingual_verify.json` 实测 `distinct_C1_texts = 3/4`：
+法语短问候 `Bonjour` 与英语 `Hi` 的 C1 都收敛到 `\nThe user's message`。
+
+- 成因：极短问候下**基座**倾向用英文 `<think>` 开头；β=1 分支没有强行改写
+  teacher 的语言选择行为 —— 这与「零身份/零语言偏置注入」一致，是正面旁证。
+- 它**不是**硬门槛，未进 `passed` 判据；硬门槛是 219/219 全量逐位 +
+  T==C0 端到端零回归 + C1 架构生效 4/4 + 全 finite + 零泄漏。
+- **不重跑换 prompt 取巧、不改写、不抹平**；原始 checkpoint 保留在
+  `evidence/gen_deep_checkpoint.json`。
+- 因此也永远不会写「四语言生成文本必然互不相同」。
+
+## 2. 永远不许写的句子（红线）
+
+- ❌ 「v10 超越 / SOTA / 严格优于 Transformer / Mamba2」
+- ❌ 「质量轴整个超越」——上游两条独立否决已封死
+- ❌ 「8M / 无限上下文**端到端已验证**」——只能写「分支 O(1) 状态性质」
+- ❌ 「继承 SimplCore **所有**能力」——7 项 REGISTERED 是理论前提/工程契约，不是 LM 上复现
+- ❌ 「β=1 是校准成品 / 原生级 / 能力更强」
+- ❌ 「无知识污染 = 能力不变」——口径只到权重逐位 + 生成零身份标记
+- ❌ 「等于上游 PyTorch 源码执行」——TS2SC 是纯 numpy CPU 等价实现
+- ❌ 「四语言生成文本必然互不相同」——实测 3/4，见 §1b
+
+**允许写**：`β=0 逐位零回归`、`219/219 COPY 全量逐位一致`、
+`FFT↔IIR 1.69e−14`、`O(1) 定态`、`P7 主干不回写`、
+`架构同步 bec5ab8fd7`、`COMPLETE_BEYOND=False 随附`。
+
+---
+
+## 3. v10 已销账的证据（与台账对照）
+
+| 证据 | 文件 | 状态 |
+|---|---|---|
+| 22 分片 LIVE git blob sha1 | `upstream_pull_report.json` | ✅ 22/22 |
+| 219/219 COPY 全量逐位 | `v10_copy_full_audit.json` | ✅ 本轮 |
+| 312 NEW 重开逐字节复验 | `replay_full_v10.py` / manifest | ✅ 312/312 |
+| 531 张量 UNCLASSIFIED=0 | `student_full_manifest_v10.json` | ✅ |
+| 4 语言多臂生成 T/C0/C1 | `v10_multilingual_verify.json` | ✅ 本轮 |
+| 15 条 v10 架构回归 / 39 条 v8 回归 | `test_v10.py` / `test_v8.py` | ✅ 54/54 |
+| 上游 13 文件 LIVE sha256 快照 | TS2SC 仓 `ts2sc/upstream_simplcore_v11/` | ✅ |
+
+---
+
+## 4. 下一步的唯一正当顺序
+
+1. **目标机** `replay_full_v10.py --execute` 组装完整 student（沙盒磁盘 417 MiB 装不下 2.6 GB）。
+2. **L2 校准**：`calibrate_beta_v10.py` 协议（本轮只落骨架，`NOT_EXECUTED`，
+   无 checkpoint、无分数、不产出任何数字）→ 销 P-β。
+3. **L3 配对评估**：可读率 / mojibake 率 / 配对 Wilson CI → 才碰得到 P-quality。
+4. **等算力 2× 对照** → 销 P-2×（预期复现 V1，如实留档，不抹平）。
+5. GPU LoRA SFT 由维护者自跑；本仓不做身份微调、不声称。
+
+> 台账的用处不是让 v10 看起来更强，是让**每一步升级都有明确的、可被推翻的条件**。
+> 上游 v11 最值钱的产出恰恰是那两行 `False` —— 把它抄进 TS2SC，比抄任何数字都重要。
